@@ -7,12 +7,22 @@
 
 int main(void) {
   
+  SetConfigFlags(FLAG_MSAA_4X_HINT);
   InitWindow(1600, 1480, "Platformer");
 
   FlyCamera camera({ 0.0, 2.0, -4.0 }, 0.1, 5.0);
 
-  ModelComponent box({ 0.5, 0.5, 0.5 }, RED);
-  ModelComponent ground({ 5.0, 0.1, 5.0 }, GREEN);
+  ModelComponent box({ 0.5, 0.5, 0.5 }, WHITE);
+  ModelComponent ground({ 5.0, 0.1, 5.0 }, WHITE);
+
+  Texture white_tex = LoadTexture("assets/prototype/Light/texture_01.png");
+  Texture green_tex = LoadTexture("assets/prototype/Green/texture_01.png");
+
+  GenTextureMipmaps(&white_tex);
+  GenTextureMipmaps(&green_tex);
+
+  box.SetTexture(green_tex);
+  ground.SetTexture(white_tex);
 
   DisableCursor();
   while (!WindowShouldClose()) { 
@@ -35,13 +45,16 @@ int main(void) {
     BeginMode3D(camera.GetCamera().GetCamera());
     DrawGrid(20, 1.0);
 
-    box.Draw({0.0, 0.2, 0.0});
+    box.Draw({0.0, 0.3, 0.0});
     ground.Draw(Vector3Zero());
 
     EndMode3D();
     
     EndDrawing();
   }
+
+  UnloadTexture(white_tex);
+  UnloadTexture(green_tex);
 
   CloseWindow();
 
