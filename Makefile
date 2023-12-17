@@ -1,9 +1,14 @@
 LIB = -L build/raylib/raylib \
+			-L build/bullet/lib \
 			-l raylib \
 			-l gdi32 \
 			-l winmm \
+			-l BulletDynamics \
+			-l BulletCollision \
+			-l LinearMath \
 
-INCLUDE = -I build/raylib/raylib/include
+INCLUDE = -I build/raylib/raylib/include \
+					-I libs/bullet3/src \
 
 FLAGS = -Wall \
 				-std=c++17 \
@@ -13,6 +18,7 @@ OBJ = build/out/main.o \
 			build/out/Camera.o \
 			build/out/FlyCamera.o \
 			build/out/Model.o \
+			build/out/PhysicsWorld.o \
 
 GPP = g++
 
