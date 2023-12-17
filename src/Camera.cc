@@ -81,3 +81,11 @@ const Camera CameraComponent::GetCamera() const {
   };
 }
 
+const float CameraComponent::GetFOV() const {
+  return fov_;
+}
+
+void CameraComponent::SetFOV(float fov) {
+  fov_ = fov;
+}
+

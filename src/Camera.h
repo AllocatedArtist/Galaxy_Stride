@@ -22,6 +22,9 @@ public:
   void SetPosition(Vector3 position);
 
   const Camera GetCamera() const;
+
+  const float GetFOV() const;
+  void SetFOV(float fov);
 private:
   void CalculateForward();
 private:

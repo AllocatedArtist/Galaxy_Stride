@@ -11,6 +11,7 @@ FLAGS = -Wall \
 
 OBJ = build/out/main.o \
 			build/out/Camera.o \
+			build/out/FlyCamera.o \
 
 GPP = g++
 
