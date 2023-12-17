@@ -51,6 +51,12 @@ void ModelComponent::Draw(
   DrawModelEx(model_, position, rotation_axis, angle, scale, color_);
 }
 
+void ModelComponent::SetTexture(Texture texture) {
+  if (loaded_) {
+    SetMaterialTexture(&model_.materials[0], MATERIAL_MAP_ALBEDO, texture);
+  }
+}
+
 
 
 

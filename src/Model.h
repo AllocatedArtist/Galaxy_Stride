@@ -11,6 +11,8 @@ public:
   ModelComponent(float radius, Color color);
   ModelComponent(const char* filename, Color color);
 
+  void SetTexture(Texture texture);
+
   ~ModelComponent();
 
   void SetColor(Color color);
