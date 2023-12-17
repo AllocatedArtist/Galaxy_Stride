@@ -48,7 +48,7 @@ void ModelComponent::Draw(
 
   QuaternionToAxisAngle(rotation, &rotation_axis, &angle);
   
-  DrawModelEx(model_, position, rotation_axis, angle, scale, color_);
+  DrawModelEx(model_, position, rotation_axis, angle * RAD2DEG, scale, color_);
 }
 
 void ModelComponent::SetTexture(Texture texture) {
