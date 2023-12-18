@@ -6,7 +6,6 @@
 #include "src/PhysicsWorld.h"
 #include "src/PlayerMovement.h"
 
-
 #include <iostream>
 
 struct ContactInfo {
@@ -57,6 +56,13 @@ int main(void) {
 
   GenTextureMipmaps(&white_tex);
   GenTextureMipmaps(&green_tex);
+
+  SetTextureWrap(white_tex, TEXTURE_WRAP_CLAMP);
+  SetTextureWrap(green_tex, TEXTURE_WRAP_CLAMP);
+
+  SetTextureFilter(white_tex, TEXTURE_FILTER_BILINEAR);
+  SetTextureFilter(green_tex, TEXTURE_FILTER_BILINEAR);
+
 
   box.SetTexture(green_tex);
   ground.SetTexture(white_tex);
@@ -152,15 +158,12 @@ int main(void) {
       );
     }
 
-    ground.SetColor(WHITE);
 
     ground.Draw(
       conv::PosFromBody(floor), 
       { 1.0, 1.0, 1.0 }, 
       conv::RotFromBody(floor)
     );
-
-    ground.SetColor(RED);
 
     ground.Draw(
       conv::PosFromBody(floor_2), 
