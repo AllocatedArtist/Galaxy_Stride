@@ -3,7 +3,14 @@
 PhysicsWorld::PhysicsWorld() {
   config_ = std::make_unique<btDefaultCollisionConfiguration>();
   dispatcher_ = std::make_unique<btCollisionDispatcher>(config_.get());
+
+  ghost_pair_callback_ = std::make_unique<btGhostPairCallback>();
+
   overlapping_pair_cache_ = std::make_unique<btDbvtBroadphase>();
+  overlapping_pair_cache_
+    ->getOverlappingPairCache()
+    ->setInternalGhostPairCallback(ghost_pair_callback_.get());
+
   solver_ = std::make_unique<btSequentialImpulseConstraintSolver>();
   world_ = std::make_unique<btDiscreteDynamicsWorld>(
     dispatcher_.get(), 
@@ -11,6 +18,7 @@ PhysicsWorld::PhysicsWorld() {
     solver_.get(),
     config_.get()
   );
+
 
   world_->setGravity(btVector3(0.0, -9.8, 0.0));
 }
@@ -61,6 +69,62 @@ RigidBody PhysicsWorld::CreateRigidBody(
   return final_rigid_body; 
 }
 
+CharacterController PhysicsWorld::CreateController(
+  float radius, 
+  float height,
+  float step_height,
+  Vector3 position,
+  Quaternion rotation
+) {
+  CharacterController controller;
+  controller.convex_ = std::make_unique<btCapsuleShape>(radius, height);
+
+  controller.ghost_object_ = std::make_unique<btPairCachingGhostObject>();
+
+  btTransform transform;
+  transform.setIdentity();
+  
+  transform.setOrigin(btVector3(position.x, position.y, position.z));
+  transform.setRotation(btQuaternion(
+    rotation.x,
+    rotation.y,
+    rotation.z,
+    rotation.w
+  ));
+
+  controller.ghost_object_->setWorldTransform(transform);
+  controller.ghost_object_->setCollisionShape(controller.convex_.get());
+  controller.ghost_object_->setCollisionFlags(
+    btCollisionObject::CollisionFlags::CF_CHARACTER_OBJECT
+  );
+
+  controller.controller_ = std::make_unique<btKinematicCharacterController>(
+    controller.ghost_object_.get(),
+    controller.convex_.get(),
+    step_height
+  );
+
+  controller.controller_->setGravity(world_->getGravity());
+  
+  world_->addCollisionObject(
+    controller.ghost_object_.get(), 
+    btBroadphaseProxy::CharacterFilter, 
+    btBroadphaseProxy::AllFilter
+  );
+
+  world_->addAction(controller.controller_.get());
+  
+  return controller;
+}
+
+void PhysicsWorld::ReleaseController(CharacterController* controller) {
+  world_->removeCollisionObject(controller->ghost_object_.get());
+  world_->removeAction(controller->controller_.get());
+  controller->controller_.reset();
+  controller->convex_.reset();
+  controller->ghost_object_.reset();
+}
+
 std::unique_ptr<btCollisionShape> PhysicsWorld::CreateBoxShape(Vector3 size) {
   std::unique_ptr<btCollisionShape> shape = std::make_unique<btBoxShape>(
     btVector3(
@@ -91,24 +155,39 @@ void PhysicsWorld::SetGravity(Vector3 gravity) {
   world_->setGravity(btVector3(gravity.x, gravity.y, gravity.z));
 }
 
+namespace conv {
 
-Vector3 RigidBody::GetPosition() {
-  btVector3 pos = rigid_body_->getWorldTransform().getOrigin();
+const Vector3 GetVec3(btVector3 vec) {
   return Vector3 {
-    pos.getX(),
-    pos.getY(),
-    pos.getZ()
+    vec.getX(),
+    vec.getY(),
+    vec.getZ()
   };
 }
 
-Quaternion RigidBody::GetRotation() {
-  btQuaternion rot = rigid_body_->getWorldTransform().getRotation();
+const Quaternion GetQuat(btQuaternion quat) {
   return Quaternion {
-    rot.getX(),
-    rot.getY(),
-    rot.getZ(),
-    rot.getW()
+    quat.getX(),
+    quat.getY(),
+    quat.getZ(),
+    quat.getW()
   };
 }
 
+const Vector3 PosFromBody(const RigidBody& body) {
+  return GetVec3(body.rigid_body_->getWorldTransform().getOrigin());
+}
 
+const Quaternion RotFromBody(const RigidBody& body) {
+  return GetQuat(body.rigid_body_->getWorldTransform().getRotation());
+}
+
+const Vector3 PosFromController(const CharacterController& controller) {
+  return GetVec3(controller.ghost_object_->getWorldTransform().getOrigin());
+}
+
+const Quaternion RotFromController(const CharacterController& controller) {
+  return GetQuat(controller.ghost_object_->getWorldTransform().getRotation());
+}
+
+}
