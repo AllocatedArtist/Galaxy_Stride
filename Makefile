@@ -12,6 +12,7 @@ INCLUDE = -I build/raylib/raylib/include \
 
 FLAGS = -Wall \
 				-std=c++17 \
+				-O0 \
 				-g
 
 OBJ = build/out/main.o \
@@ -19,6 +20,7 @@ OBJ = build/out/main.o \
 			build/out/FlyCamera.o \
 			build/out/Model.o \
 			build/out/PhysicsWorld.o \
+			build/out/PlayerMovement.o \
 
 GPP = g++
 
