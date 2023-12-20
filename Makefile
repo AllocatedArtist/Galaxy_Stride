@@ -7,6 +7,8 @@ LIB = -L build/raylib/raylib \
 			-l BulletCollision \
 			-l LinearMath \
 
+HEADERS = -I src
+
 INCLUDE = -I build/raylib/raylib/include \
 					-I libs/bullet3/src \
 
@@ -25,7 +27,7 @@ OBJ = build/out/main.o \
 GPP = g++
 
 all: $(OBJ)
-	$(GPP) -o build/app.exe $(OBJ) $(LIB) $(FLAGS)
+	$(GPP) -o build/app.exe $(OBJ) $(LIB) $(FLAGS) $(HEADERS)
 
 build/out/%.o: %.cc
 	echo "$< -> $@"
@@ -41,3 +43,6 @@ build_run:
 
 run:
 	./build/app.exe
+
+clean:
+	rm -f build/out/*.o
