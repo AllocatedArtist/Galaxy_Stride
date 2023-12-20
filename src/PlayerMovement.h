@@ -6,28 +6,37 @@
 
 class PlayerMovement {
 public:
-  PlayerMovement() = default;
+  PlayerMovement();
   void Update(CharacterController& player, FlyCamera& camera);
+  const float GetStamina() const;
 private:
-  Vector3 walk = Vector3Zero();  
+  Vector3 walk_;
 
-  float walk_speed = 2.0;
-  float run_speed = 4.0;
-  float crouch_speed = 0.3;
-  float current_speed = walk_speed;
+  float walk_speed_;
+  float run_speed_;
+  float crouch_speed_;
+  float current_speed_;
+
+  bool sprint_;
   
-  float stand_jump_height = 5.0;
-  float crouched_jump_height = 2.5;
-  float current_jump_height = stand_jump_height;
+  float stand_jump_height_;
+  float crouched_jump_height_;
+  float current_jump_height_;
 
-  bool sliding = false;
+  bool sliding_;
 
-  float ground_friction = 0.4 / 10.0;
-  float slide_friction = 0.35 / 10.0;
-  float air_friction = 0.08 / 10.0;
+  float ground_friction_;
+  float slide_friction_;
+  float air_friction_;
 
-  std::unique_ptr<btConvexShape> crouched_capsule = 
-    std::make_unique<btCapsuleShape>(0.2, 0.25);
+  float max_stamina_;
+  float stamina_;
+
+  float sprint_stamina_drain_;
+  float slide_stamina_drain_;
+  float slide_jump_stamina_drain_;
+
+  std::unique_ptr<btConvexShape> crouched_capsule_;
 };
 
 
