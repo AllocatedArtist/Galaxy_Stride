@@ -173,6 +173,8 @@ int main(void) {
 
     EndMode3D();
 
+    DrawRectangle(20, 50, 500, 30, GRAY);
+    DrawRectangle(20, 50, (int)player_movement.GetStamina() * 10, 30, BLUE);
     DrawFPS(0, 0);
     
     EndDrawing();
