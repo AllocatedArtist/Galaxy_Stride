@@ -39,6 +39,6 @@ private:
   std::unique_ptr<btConvexShape> crouched_capsule_;
 };
 
-
+void DrawStamina(PlayerMovement player_movement);
 
 #endif

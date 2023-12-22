@@ -182,3 +182,8 @@ const float PlayerMovement::GetStamina() const {
   return stamina_;
 }
 
+void DrawStamina(const PlayerMovement& player_movement) {
+  DrawRectangle(20, 50, 500, 30, GRAY);
+  DrawRectangle(20, 50, (int)player_movement.GetStamina() * 10, 30, BLUE);
+}
+
