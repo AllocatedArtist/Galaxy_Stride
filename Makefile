@@ -23,6 +23,7 @@ OBJ = build/out/main.o \
 			build/out/Model.o \
 			build/out/PhysicsWorld.o \
 			build/out/PlayerMovement.o \
+			build/out/LevelEditor.o \
 
 GPP = g++
 
