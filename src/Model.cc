@@ -1,25 +1,36 @@
 #include "Model.h"
+#include <iostream>
 
 ModelComponent::ModelComponent() {
   loaded_ = false;
   color_ = PURPLE;
 }
 
+ModelComponent::ModelComponent(ModelComponent&& other) {
+  model_ = std::move(other.model_); 
+  color_ = other.color_;
+
+  loaded_ = other.loaded_;
+  other.loaded_ = false;
+}
+
 ModelComponent::ModelComponent(Vector3 size, Color color) {
-  loaded_ = true;
   model_ = LoadModelFromMesh(GenMeshCube(size.x, size.y, size.z));
+  loaded_ = true;
   color_ = color;
 }
 
 ModelComponent::ModelComponent(float radius, Color color) {
-  loaded_ = true;
   model_ = LoadModelFromMesh(GenMeshSphere(radius, 8, 8));
+  loaded_ = true;
   color_ = color;
 }
 
 ModelComponent::ModelComponent(const char* filename, Color color) {
-  loaded_ = true;
   model_ = LoadModel(filename);
+  if (model_.meshCount > 0) {
+    loaded_ = true;
+  }
   color_ = color;
 }
 
@@ -55,6 +66,10 @@ void ModelComponent::SetTexture(Texture texture) {
   if (loaded_) {
     SetMaterialTexture(&model_.materials[0], MATERIAL_MAP_ALBEDO, texture);
   }
+}
+
+const BoundingBox ModelComponent::GetBoundingBox() const {
+  return GetModelBoundingBox(model_);
 }
 
 

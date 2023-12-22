@@ -7,9 +7,13 @@
 class ModelComponent {
 public:
   ModelComponent();
+  ModelComponent(ModelComponent&& other);
+
   ModelComponent(Vector3 size, Color color);
   ModelComponent(float radius, Color color);
   ModelComponent(const char* filename, Color color);
+
+  const BoundingBox GetBoundingBox() const;
 
   void SetTexture(Texture texture);
 
