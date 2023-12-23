@@ -21,6 +21,8 @@ int main(void) {
   LevelEditor level_editor;
   level_editor.UpdateThumbnails();
 
+  std::vector<LevelMesh> meshes;
+
   while (!WindowShouldClose()) { 
 
     level_editor.UpdateCamera(camera);
@@ -30,7 +32,12 @@ int main(void) {
  
     BeginMode3D(camera.GetCamera().GetCamera()); 
     
+    level_editor.PlaceObjects(meshes, camera);
     DrawGrid(20, 1.0);
+
+    for (const LevelMesh& mesh : meshes) {
+      level_editor.DrawAsset(mesh);
+    }
  
     EndMode3D();
 
