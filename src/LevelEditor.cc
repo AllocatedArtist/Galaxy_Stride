@@ -1,6 +1,8 @@
 #include "LevelEditor.h"
+#include "raylib.h"
 
 LevelEditor::LevelEditor() {
+  model_cursor_pos_ = Vector3Zero();
   FilePathList model_paths = LoadDirectoryFiles("assets\\models");
 
   for (int i = 0; i < model_paths.count; ++i) {
@@ -57,6 +59,47 @@ void LevelEditor::UpdateCamera(FlyCamera& camera) {
   camera.Move();
 }
 
+void LevelEditor::PlaceObjects(std::vector<LevelMesh>& meshes, FlyCamera& camera) {
+  if (selected_asset_ > -1 && !IsCursorHidden()) {
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+
+      if (Vector3Equals(model_cursor_pos_, Vector3Zero())) {
+        Vector3 mouse_pos = { (float)GetMouseX(), (float)GetMouseY(), 1.f };
+
+        Vector3 camera_pos = camera.GetCamera().GetPosition();
+        Vector3 forward = camera.GetCamera().GetForward();
+        Vector3 right = camera.GetCamera().GetRight();
+      }
+
+      Ray mouse_ray = GetMouseRay(
+        GetMousePosition(), 
+        camera.GetCamera().GetCamera()
+      );
+   
+      model_cursor_pos_ = Vector3Add(
+        mouse_ray.position, 
+        Vector3Scale(mouse_ray.direction, 5.0)
+      );
+
+ 
+      if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+        meshes.emplace_back(LevelMesh {
+          selected_asset_,
+          model_cursor_pos_
+        }); 
+      }
+
+      assets_[selected_asset_].model_.Draw(model_cursor_pos_);
+    } else {
+      model_cursor_pos_ = Vector3Zero();
+    }
+  }
+}
+
+void LevelEditor::DrawAsset(const LevelMesh& mesh) {
+  assets_[mesh.index_].model_.Draw(mesh.pos_);
+}
+
 void LevelEditor::UpdateThumbnails() {
   for (LevelAsset& mesh : assets_) {
       Camera3D thumbnail_camera {
@@ -106,6 +149,9 @@ void LevelEditor::DrawThumbnails() {
 
   float y = 200.0;
   float x = 0.f;
+
+  Vector2 mouse_pos = GetMousePosition();
+
   for (int i = 0; i < assets_.size(); ++i) {
     if (i % 16 == 0) {
       x = 0.0;
@@ -118,8 +164,22 @@ void LevelEditor::DrawThumbnails() {
       { x, y },
       WHITE
     );
-    DrawRectangleLines(x, y, 100.0, 100.0, BLACK);
-
+  
+    if (selected_asset_ == i) {
+      DrawRectangleLines(x, y, 100.0, 100.0, YELLOW);
+    } else {
+      DrawRectangleLines(x, y, 100.0, 100.0, BLACK);
+    }
+    
+    if (CheckCollisionPointRec(mouse_pos, { x, y, 100.0, 100.0 })) {
+      if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))  {
+        if (selected_asset_ == i) {
+          selected_asset_ = NO_SELECTED_ASSET;
+        } else {
+          selected_asset_ = i;
+        }
+      }
+    }
     x += 100.0;
   } 
 }
