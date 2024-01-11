@@ -11,6 +11,7 @@ HEADERS = -I src
 
 INCLUDE = -I build/raylib/raylib/include \
 					-I libs/bullet3/src \
+					-I libs/json/single_include/nlohmann \
 
 FLAGS = -Wall \
 				-std=c++17 \
