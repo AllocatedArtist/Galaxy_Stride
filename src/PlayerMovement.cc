@@ -30,7 +30,7 @@ PlayerMovement::PlayerMovement() {
   slide_jump_stamina_drain_ = 4.0;
 
   crouched_capsule_ = 
-    std::make_unique<btCapsuleShape>(0.2, 0.25);
+    std::make_unique<btCapsuleShape>(0.25, 0.75);
 }
 
 
@@ -100,7 +100,7 @@ void PlayerMovement::Update(CharacterController& player, FlyCamera& camera) {
           sliding_ = true;
         }
       }
-    } else {
+    } else if (IsKeyUp(KEY_LEFT_CONTROL)) {
       current_jump_height_ = stand_jump_height_;
       player.ghost_object_->setCollisionShape(player.convex_.get());
     }
