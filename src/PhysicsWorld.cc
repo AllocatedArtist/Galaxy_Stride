@@ -73,26 +73,13 @@ CharacterController PhysicsWorld::CreateController(
   float radius, 
   float height,
   float step_height,
-  Vector3 position,
-  Quaternion rotation
+  Vector3 position
 ) {
   CharacterController controller;
   controller.convex_ = std::make_unique<btCapsuleShape>(radius, height);
 
   controller.ghost_object_ = std::make_unique<btPairCachingGhostObject>();
-
-  btTransform transform;
-  transform.setIdentity();
-  
-  transform.setOrigin(btVector3(position.x, position.y, position.z));
-  transform.setRotation(btQuaternion(
-    rotation.x,
-    rotation.y,
-    rotation.z,
-    rotation.w
-  ));
-
-  controller.ghost_object_->setWorldTransform(transform);
+ 
   controller.ghost_object_->setCollisionShape(controller.convex_.get());
   controller.ghost_object_->setCollisionFlags(
     btCollisionObject::CollisionFlags::CF_CHARACTER_OBJECT
@@ -113,7 +100,12 @@ CharacterController PhysicsWorld::CreateController(
   );
 
   world_->addAction(controller.controller_.get());
-  
+
+  btTransform transform;
+  transform.setIdentity();  
+  transform.setOrigin(btVector3(position.x, position.y, position.z));
+  controller.ghost_object_->setWorldTransform(transform);
+ 
   return controller;
 }
 

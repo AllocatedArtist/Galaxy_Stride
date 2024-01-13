@@ -47,8 +47,7 @@ public:
     float radius, 
     float height, 
     float step_height,
-    Vector3 position,
-    Quaternion rotation
+    Vector3 position
   );
  
   RigidBody CreateRigidBody(
