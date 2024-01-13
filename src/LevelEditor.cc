@@ -624,3 +624,8 @@ void LevelEditor::Load(std::vector<LevelMesh>& meshes) {
 const std::string& LevelEditor::GetCurrentFileSaveName() const {
   return current_file_save_; 
 }
+
+LevelAsset& LevelEditor::GetAsset(int index) {
+  return assets_[index];
+}
+

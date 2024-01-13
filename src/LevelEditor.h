@@ -53,6 +53,8 @@ public:
   void Load(std::vector<LevelMesh>& meshes);
 
   const std::string& GetCurrentFileSaveName() const;
+
+  LevelAsset& GetAsset(int index);
 private:
   nlohmann::json level_content_;
   std::string current_file_save_;
