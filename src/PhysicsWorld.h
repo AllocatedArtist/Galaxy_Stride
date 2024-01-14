@@ -5,10 +5,10 @@
 #include <BulletDynamics/Character/btKinematicCharacterController.h>
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
 
-#include <raymath.h>
-
 #include <vector>
 #include <memory>
+
+#include "LevelEditor.h"
 
 struct RigidBody {
   std::unique_ptr<btDefaultMotionState> motion_state_;
@@ -28,8 +28,12 @@ namespace conv {
   const Quaternion RotFromBody(const RigidBody& body);
   const Vector3 PosFromController(const CharacterController& controller);
   const Quaternion RotFromController(const CharacterController& controller);
-
 }
+
+enum PhysicsLayer {
+  kPlayerLayer,
+  kCoinLayer
+};
 
 
 class PhysicsWorld {
@@ -67,5 +71,15 @@ private:
   std::unique_ptr<btSequentialImpulseConstraintSolver> solver_;
   std::unique_ptr<btDiscreteDynamicsWorld> world_;
 };
+
+bool OnContactAdded(
+  btManifoldPoint& cp, 
+  const btCollisionObjectWrapper* colObj0Wrap, 
+  int partId0, 
+  int index0, 
+  const btCollisionObjectWrapper* colObj1Wrap, 
+  int partId1, 
+  int index1
+);
 
 #endif

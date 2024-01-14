@@ -1,5 +1,7 @@
 #include "PhysicsWorld.h"
 
+#include <iostream>
+
 PhysicsWorld::PhysicsWorld() {
   config_ = std::make_unique<btDefaultCollisionConfiguration>();
   dispatcher_ = std::make_unique<btCollisionDispatcher>(config_.get());
@@ -21,6 +23,8 @@ PhysicsWorld::PhysicsWorld() {
 
 
   world_->setGravity(btVector3(0.0, -9.8, 0.0));
+
+  gContactAddedCallback = OnContactAdded;
 }
 
 void PhysicsWorld::Update(float timestep) {
@@ -146,6 +150,30 @@ void PhysicsWorld::ReleaseBody(RigidBody* body) {
 void PhysicsWorld::SetGravity(Vector3 gravity) {
   world_->setGravity(btVector3(gravity.x, gravity.y, gravity.z));
 }
+
+bool OnContactAdded(
+  btManifoldPoint& cp, 
+  const btCollisionObjectWrapper* colObj0Wrap, 
+  int partId0, 
+  int index0, 
+  const btCollisionObjectWrapper* colObj1Wrap, 
+  int partId1, 
+  int index1
+) {
+  const btCollisionObject* obj1 = colObj0Wrap->getCollisionObject();
+  const btCollisionObject* obj2 = colObj1Wrap->getCollisionObject();
+
+  if (obj1->getUserIndex() == PhysicsLayer::kCoinLayer) {
+    if (obj2->getUserIndex() == PhysicsLayer::kPlayerLayer) {
+      LevelCoin* coin = 
+        (LevelCoin*)obj1->getUserPointer();
+      coin->collected_ = true;
+    }
+  }
+
+  return false;
+}
+
 
 namespace conv {
 
