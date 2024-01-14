@@ -8,6 +8,7 @@ class PlayerMovement {
 public:
   PlayerMovement();
   void Update(CharacterController& player, FlyCamera& camera);
+  void ResetStamina();
   const float GetStamina() const;
 private:
   Vector3 walk_;
@@ -39,6 +40,6 @@ private:
   std::unique_ptr<btConvexShape> crouched_capsule_;
 };
 
-void DrawStamina(PlayerMovement player_movement);
+void DrawStamina(const PlayerMovement& player_movement);
 
 #endif
