@@ -23,6 +23,8 @@ LevelEditor::LevelEditor() {
 
   player_angle_ = 0.0f;
   player_position_ = Vector3Zero();
+
+  coin_mode_ = false;
 }
 
 LevelEditor::~LevelEditor() {
@@ -71,10 +73,29 @@ void LevelEditor::UpdateCamera(FlyCamera& camera) {
   camera.Move();
 }
 
-void LevelEditor::PlaceObjects(std::vector<LevelMesh>& meshes, FlyCamera& camera) {
+void LevelEditor::PlaceObjects(
+  std::vector<LevelCoin>& coins,
+  std::vector<LevelMesh>& meshes, 
+  FlyCamera& camera
+) {
 
-  if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_Z) && !meshes.empty()) {
+  if (
+    IsKeyDown(KEY_LEFT_CONTROL) && 
+    IsKeyPressed(KEY_Z) && 
+    !meshes.empty() &&
+    !coin_mode_) {
     meshes.pop_back();
+  } else if (
+    IsKeyDown(KEY_LEFT_CONTROL) && 
+    IsKeyPressed(KEY_Z) && 
+    !coins.empty() &&
+    coin_mode_
+  ) {
+    coins.pop_back();
+  }
+
+  if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_C)) {
+    coin_mode_ = !coin_mode_;
   }
 
   if (selected_asset_ > -1 && !IsCursorHidden()) {
@@ -162,13 +183,20 @@ void LevelEditor::PlaceObjects(std::vector<LevelMesh>& meshes, FlyCamera& camera
       model_cursor_pos_ = offset;
       prev_cursor_pos_ = model_cursor_pos_;
  
-      if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+      if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && !coin_mode_) {
         meshes.emplace_back(LevelMesh {
           selected_asset_,
           model_cursor_pos_,
           QuaternionFromAxisAngle({ 0.f, 1.f, 0.f }, rot_angle_ * DEG2RAD),
           false
         }); 
+      } else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && coin_mode_) {
+        coins.emplace_back(LevelCoin {
+          selected_asset_,
+          model_cursor_pos_,
+          QuaternionFromAxisAngle({ 0.f, 1.f, 0.f }, rot_angle_ * DEG2RAD),
+          false
+        });
       }
 
       assets_[selected_asset_].model_.Draw(
@@ -231,6 +259,11 @@ void LevelEditor::DrawAsset(const LevelMesh& mesh) {
   if (IsKeyDown(KEY_C)) {
     DrawObjectBounds(mesh);
   }
+}
+
+void LevelEditor::DrawCoins(const LevelCoin& coin) {
+  LevelAsset& model = assets_[coin.index_];
+  model.model_.Draw(coin.pos_, { 1.0, 1.0, 1.0 }, coin.rotation_);  
 }
 
 void LevelEditor::SelectObject(LevelMesh& mesh, FlyCamera& camera) {
@@ -629,3 +662,6 @@ LevelAsset& LevelEditor::GetAsset(int index) {
   return assets_[index];
 }
 
+const bool LevelEditor::IsCoinMode() const {
+  return coin_mode_;
+}

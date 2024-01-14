@@ -23,6 +23,13 @@ struct LevelMesh {
   bool selected_;
 };
 
+struct LevelCoin {
+  int index_;
+  Vector3 pos_;
+  Quaternion rotation_;
+  bool collected_;
+};
+
 class LevelEditor {
 public:
   LevelEditor();
@@ -31,11 +38,16 @@ public:
   void UpdateCamera(FlyCamera& camera);
   void UpdateThumbnails();
 
-  void PlaceObjects(std::vector<LevelMesh>& meshes, FlyCamera& camera);
+  void PlaceObjects(
+    std::vector<LevelCoin>& coins, 
+    std::vector<LevelMesh>& meshes, 
+    FlyCamera& camera
+  );
 
   void DrawThumbnails();
-
   void DrawAsset(const LevelMesh& mesh);
+  void DrawCoins(const LevelCoin& coin);
+  
   void SelectObject(LevelMesh& mesh, FlyCamera& camera);
   void PlacePlayer(FlyCamera& camera);
 
@@ -43,6 +55,8 @@ public:
 
   const float GetPlayerYaw() const;
   const Vector3 GetPlayerPosition() const;
+
+  const bool IsCoinMode() const;
 
   // 0, 90, 180, or 270
   void SetPlayerYaw(float yaw);
@@ -58,6 +72,8 @@ public:
 private:
   nlohmann::json level_content_;
   std::string current_file_save_;
+private:
+  bool coin_mode_;
 private:
   float player_angle_;
   Vector3 player_position_;
