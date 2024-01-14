@@ -1,4 +1,3 @@
-#include <fstream>
 #include <raylib.h>
 
 #include "src/Model.h"
@@ -7,10 +6,11 @@
 #include "src/PlayerMovement.h"
 #include "src/LevelEditor.h"
 
+#include <algorithm>
 #include <iostream>
 
 int main(void) {
-  SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_WINDOW_RESIZABLE);
+  SetConfigFlags(FLAG_WINDOW_RESIZABLE);
   InitWindow(1600, 1480, "Platformer");
 
   FlyCamera camera({ 0.0, 2.0, -5.0 }, 0.1, 5.0);
@@ -22,6 +22,7 @@ int main(void) {
   level_editor.UpdateThumbnails();
 
   std::vector<LevelMesh> meshes;
+  std::vector<LevelCoin> coins;
   SetExitKey(KEY_NULL);
 
   bool saved = false;
@@ -35,8 +36,13 @@ int main(void) {
   std::vector<RigidBody> mesh_bodies;
   std::vector<std::unique_ptr<btCollisionShape>> mesh_colliders;
 
+  std::vector<RigidBody> coin_bodies;
+  std::vector<std::unique_ptr<btCollisionShape>> coin_colliders;
+
   CharacterController player;
   PlayerMovement player_movement;
+
+  int score = 0;
     
   while (!WindowShouldClose()) { 
 
@@ -44,16 +50,32 @@ int main(void) {
       is_play_mode = !is_play_mode;
       if (!is_play_mode) {
         create_collision = true;
+
         mesh_colliders.clear();
+        coin_colliders.clear();
+
         for (RigidBody& body : mesh_bodies) {
           physics.ReleaseBody(&body);
         }
+
+        for (RigidBody& body : coin_bodies) {
+          physics.ReleaseBody(&body);
+        }
+
+        for (LevelCoin& coin : coins) {
+          coin.collected_ = false;
+        }
+
+
         mesh_bodies.clear();
+        coin_bodies.clear();
+
         physics.ReleaseController(&player);
 
         EnableCursor();
         camera.GetCamera().SetPosition({ 0.f, 0.f, 0.f });
       } else {
+        player_movement.ResetStamina();
         DisableCursor();
       }
     }
@@ -77,12 +99,43 @@ int main(void) {
         ));
       }
 
+      for (LevelCoin& coin : coins) {
+        ModelComponent& model = level_editor.GetAsset(coin.index_).model_;
+        BoundingBox bounds = model.GetBoundingBox();
+
+        Vector3 size = Vector3Subtract(bounds.max, bounds.min);
+        coin_colliders.emplace_back(physics.CreateBoxShape(size));
+
+        std::unique_ptr<btCollisionShape>& box = coin_colliders.back();
+        
+        coin_bodies.emplace_back(physics.CreateRigidBody(
+          coin.pos_,
+          box,
+          coin.rotation_,
+          0.f
+        ));
+
+        RigidBody& body = coin_bodies.back();
+        body.rigid_body_->setCollisionFlags(
+          btCollisionObject::CF_NO_CONTACT_RESPONSE |
+          btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK
+        );
+        body.rigid_body_->setUserIndex(PhysicsLayer::kCoinLayer);
+        body.rigid_body_->setUserPointer(&coins[coin_bodies.size() - 1]);
+      }
+
       player = physics.CreateController(
         0.25, 
         1.5,
         0.1, 
         level_editor.GetPlayerPosition()
       );
+
+      player.ghost_object_->setCollisionFlags(
+        player.ghost_object_->getCollisionFlags() |
+        btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK
+      );
+      player.ghost_object_->setUserIndex(PhysicsLayer::kPlayerLayer);
 
       camera.GetCamera().SetPitch(0.f);
       camera.GetCamera().SetYaw(level_editor.GetPlayerYaw());
@@ -95,6 +148,8 @@ int main(void) {
       player_movement.Update(player, camera);
 
       if (camera.GetCamera().GetPosition().y <= -10.f) {
+        player_movement.ResetStamina();
+
         btTransform transform;
         transform.setIdentity();
 
@@ -105,7 +160,19 @@ int main(void) {
 
         camera.GetCamera().SetPitch(0.f);
         camera.GetCamera().SetYaw(level_editor.GetPlayerYaw());
-      }
+
+        for (LevelCoin& coin : coins) {
+          coin.collected_ = false;
+        }
+      }   
+
+      score = std::count_if(
+        coins.cbegin(), 
+        coins.cend(), 
+        [](const LevelCoin& coin){
+          return coin.collected_;
+        }
+      );
     }
 
     if (!is_play_mode) {
@@ -129,18 +196,23 @@ int main(void) {
 
     BeginMode3D(camera.GetCamera().GetCamera()); 
 
-
     if (!is_play_mode) {
       level_editor.PlacePlayer(camera);
     
       DrawGrid(20, 1.0);
 
       if (!level_editor.IsPlayerSetMode()) {
-        level_editor.PlaceObjects(meshes, camera);
+        level_editor.PlaceObjects(coins, meshes, camera);
 
         for (LevelMesh& mesh : meshes) {
           level_editor.SelectObject(mesh, camera);
         }
+      }
+    }
+
+    for (const LevelCoin& coin : coins) {
+      if (!coin.collected_) {
+        level_editor.DrawCoins(coin);
       }
     }
 
@@ -169,8 +241,12 @@ int main(void) {
     }
 
     if (is_play_mode) {
-      DrawRectangle(10, 100, 500, 50, GRAY);
-      DrawRectangle(10, 100, player_movement.GetStamina() * 10.0, 50, RED);
+      DrawStamina(player_movement);
+      DrawText(TextFormat("SCORE: %d", score), 20, 90, 32, WHITE);
+    }
+
+    if (level_editor.IsCoinMode()) {
+      DrawText("COIN MODE ON", 400, 200, 32, RED);
     }
 
 
@@ -178,6 +254,23 @@ int main(void) {
     
     EndDrawing(); 
   }
+
+  mesh_colliders.clear();
+  coin_colliders.clear();
+
+  for (RigidBody& body : mesh_bodies) {
+    physics.ReleaseBody(&body);
+  }
+
+  for (RigidBody& body : coin_bodies) {
+    physics.ReleaseBody(&body);
+  }
+
+  mesh_bodies.clear();
+  coin_bodies.clear();
+
+  physics.ReleaseController(&player);
+ 
 
   CloseWindow();
 
