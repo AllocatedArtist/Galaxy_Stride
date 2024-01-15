@@ -25,6 +25,7 @@ LevelEditor::LevelEditor() {
   player_position_ = Vector3Zero();
 
   coin_mode_ = false;
+  flag_mode_ = false;
 }
 
 LevelEditor::~LevelEditor() {
@@ -74,11 +75,11 @@ void LevelEditor::UpdateCamera(FlyCamera& camera) {
 }
 
 void LevelEditor::PlaceObjects(
+  Flag& flag,
   std::vector<LevelCoin>& coins,
   std::vector<LevelMesh>& meshes, 
   FlyCamera& camera
 ) {
-
   if (
     IsKeyDown(KEY_LEFT_CONTROL) && 
     IsKeyPressed(KEY_Z) && 
@@ -94,12 +95,27 @@ void LevelEditor::PlaceObjects(
     coins.pop_back();
   }
 
-  if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_C)) {
+  if (
+    IsKeyDown(KEY_LEFT_CONTROL) && 
+    IsKeyPressed(KEY_C) && 
+    !flag_mode_
+  ) {
     coin_mode_ = !coin_mode_;
-  }
+  } 
 
-  if (selected_asset_ > -1 && !IsCursorHidden()) {
-    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+  if (
+    IsKeyDown(KEY_LEFT_CONTROL) && 
+    IsKeyPressed(KEY_F) &&
+    !coin_mode_
+  ) {
+    flag_mode_ = !flag_mode_;
+  }
+  
+  if (
+    (selected_asset_ > -1 && !IsCursorHidden()) || 
+    (flag_mode_ && !IsCursorHidden())
+  ) {
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) || flag_mode_) {
       if (IsKeyPressed(KEY_E)) {
         snap_ = Snap::kNone; 
       }
@@ -174,36 +190,49 @@ void LevelEditor::PlaceObjects(
       }
 
       if (IsKeyDown(KEY_ONE)) {
-        rot_angle_ -= 10.f * GetFrameTime();
+        rot_angle_ -= 25.f * GetFrameTime();
       }
       if (IsKeyDown(KEY_THREE)) {
-        rot_angle_ += 10.f * GetFrameTime();
+        rot_angle_ += 25.f * GetFrameTime();
       }
   
       model_cursor_pos_ = offset;
       prev_cursor_pos_ = model_cursor_pos_;
  
-      if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && !coin_mode_) {
+      if (
+        IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && 
+        !coin_mode_ &&
+        !flag_mode_
+      ) {
         meshes.emplace_back(LevelMesh {
           selected_asset_,
           model_cursor_pos_,
           QuaternionFromAxisAngle({ 0.f, 1.f, 0.f }, rot_angle_ * DEG2RAD),
           false
         }); 
-      } else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && coin_mode_) {
+      } 
+      if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && coin_mode_) {
         coins.emplace_back(LevelCoin {
           selected_asset_,
           model_cursor_pos_,
           QuaternionFromAxisAngle({ 0.f, 1.f, 0.f }, rot_angle_ * DEG2RAD),
           false
         });
+      } 
+      if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && flag_mode_) {
+        flag.flag_position_ = model_cursor_pos_;
+        flag.flag_rotation_ = 
+          QuaternionFromAxisAngle({ 0.f, 1.f, 0.f }, rot_angle_ * DEG2RAD);
+        flag_mode_ = false;
       }
+      
+      int asset_draw = flag_mode_ ? kFlagModelIndex : selected_asset_;
 
-      assets_[selected_asset_].model_.Draw(
+      assets_[asset_draw].model_.Draw(
         model_cursor_pos_, 
         {1.0, 1.0, 1.0 }, 
         QuaternionFromAxisAngle({ 0.f, 1.f, 0.f }, rot_angle_ * DEG2RAD)
-      );
+      ); 
     } else {
       snap_ = Snap::kNone;
       model_cursor_pos_ = Vector3Zero();
@@ -442,7 +471,7 @@ void LevelEditor::UpdateThumbnails() {
 }
 
 void LevelEditor::PlacePlayer(FlyCamera& camera) {
-  if (IsKeyPressed(KEY_P)) {
+  if (IsKeyPressed(KEY_P) && !IsCoinMode()) {
     set_player_ = !set_player_;
   }
 
@@ -576,33 +605,79 @@ void LevelEditor::DrawThumbnails() {
   } 
 }
 
-void LevelEditor::Save(const std::vector<LevelMesh>& meshes) {
+void LevelEditor::Save(
+  const Flag& flag,
+  const std::vector<LevelMesh>& meshes,
+  const std::vector<LevelCoin>& coins
+) {
   if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_S)) {
-      int index = 0;
+    int index = 0;
 
-      Vector3 player_pos = GetPlayerPosition();
-      float player_rot = GetPlayerYaw();
+    Vector3 player_pos = GetPlayerPosition();
+    float player_rot = GetPlayerYaw();
   
+    level_content_[index] = {
+      { "type", kPlayer },
+      { "position", { player_pos.x, player_pos.y, player_pos.z }},
+      { "rotation", { player_rot } }
+    };
+
+    index += 1;
+    
+    for (const LevelCoin& coin : coins) {
       level_content_[index] = {
-        { "position", { player_pos.x, player_pos.y, player_pos.z }},
-        { "rotation", { player_rot } }
+        { "type", kCoin },
+        { "position", { coin.pos_.x, coin.pos_.y, coin.pos_.z } },
+        { "rotation", 
+          { 
+            coin.rotation_.x, 
+            coin.rotation_.y, 
+            coin.rotation_.z, 
+            coin.rotation_.w 
+          } 
+        },
+        { "mesh", coin.index_ }
       };
-
       index += 1;
+    }
 
-      for (const LevelMesh& mesh : meshes) {
-        level_content_[index] = {
-          { "position", { mesh.pos_.x, mesh.pos_.y, mesh.pos_.z } },
-          { "rotation", 
-            { 
-              mesh.rotation_.x, 
-              mesh.rotation_.y, 
-              mesh.rotation_.z, 
-              mesh.rotation_.w 
-            } 
-          },
-          { "mesh", mesh.index_ }
-        };
+    level_content_[index] = {
+      { "type", kFlag },
+      { 
+        "position", 
+        { 
+          flag.flag_position_.x, 
+          flag.flag_position_.y, 
+          flag.flag_position_.z 
+        }
+      },
+      { 
+        "rotation",
+        {
+          flag.flag_rotation_.x,
+          flag.flag_rotation_.y,
+          flag.flag_rotation_.z,
+          flag.flag_rotation_.w,
+        }
+      }
+    };
+
+    index += 1;
+
+    for (const LevelMesh& mesh : meshes) {
+      level_content_[index] = {
+        { "type", kStaticModel },
+        { "position", { mesh.pos_.x, mesh.pos_.y, mesh.pos_.z } },
+        { "rotation", 
+          { 
+            mesh.rotation_.x, 
+            mesh.rotation_.y, 
+            mesh.rotation_.z, 
+            mesh.rotation_.w 
+          } 
+        },
+        { "mesh", mesh.index_ }
+      };
         index += 1;
       }
 
@@ -620,7 +695,11 @@ void LevelEditor::Save(const std::vector<LevelMesh>& meshes) {
     }
 }
 
-void LevelEditor::Load(std::vector<LevelMesh>& meshes) {
+void LevelEditor::Load(
+  Flag& flag,
+  std::vector<LevelMesh>& meshes, 
+  std::vector<LevelCoin>& coins
+) {
   if (IsFileDropped()) {
     meshes.clear();
     FilePathList dropped = LoadDroppedFiles();
@@ -630,25 +709,71 @@ void LevelEditor::Load(std::vector<LevelMesh>& meshes) {
 
       int index = 0;
       for (auto& [key, value] : contents.items()) {
-        std::vector<float> pos = value["position"];
-        std::vector<float> rot = value["rotation"];
+        ObjectType type = value["type"];
+        switch (type) {
+          case kPlayer: {
+            std::vector<float> position = value["position"];
+            std::vector<float> rotation = value["rotation"];
+            player_position_ = Vector3 { 
+              position[0],
+              position[1],
+              position[2]
+            };
+            player_angle_ = rotation[0];
+            break;
+          }
+          case kStaticModel: {
+            std::vector<float> position = value["position"];
+            std::vector<float> rotation = value["rotation"];
+            int index = value["mesh"];
 
-        if (index == 0) {
-          SetPlayerYaw(rot[0]);
-          SetPlayerPosition({ pos[0], pos[1], pos[2]});
-        } else {
-          int mesh = value["mesh"];
+            meshes.emplace_back(LevelMesh {
+              .index_ = index,
+              .pos_ = Vector3 { position[0], position[1], position[2] },
+              .rotation_ = Quaternion { 
+                rotation[0], 
+                rotation[1], 
+                rotation[2], 
+                rotation[3] 
+              },
+              .selected_ = false
+            });
+            break;
+          }
+          case kCoin: {
+            std::vector<float> position = value["position"];
+            std::vector<float> rotation = value["rotation"];
+            int index = value["mesh"];
 
-          meshes.emplace_back(LevelMesh {
-            .index_ = value["mesh"],
-            .pos_ = Vector3 { pos[0], pos[1], pos[2] },
-            .rotation_ = Quaternion { rot[0], rot[1], rot[2], rot[3] },
-            .selected_ = false
-          });
+            coins.emplace_back(LevelCoin {
+              .index_ = index,
+              .pos_ = Vector3 { position[0], position[1], position[2] },
+              .rotation_ = Quaternion { 
+                rotation[0], 
+                rotation[1], 
+                rotation[2], 
+                rotation[3] 
+              },
+              .collected_ = false
+            });
+            break;
+          }
+          case kFlag: {
+            std::vector<float> position = value["position"];
+            std::vector<float> rotation = value["rotation"];
+
+            flag.flag_position_ = { position[0], position[1], position[2] };
+            flag.flag_rotation_ = { 
+              rotation[0], 
+              rotation[1], 
+              rotation[2], 
+              rotation[3] 
+            };
+            flag.is_touched_ = false;
+            break;
+          }
         }
-        index += 1;
-      }
-        
+      }    
     }
     UnloadDroppedFiles(dropped);
   }
@@ -665,3 +790,17 @@ LevelAsset& LevelEditor::GetAsset(int index) {
 const bool LevelEditor::IsCoinMode() const {
   return coin_mode_;
 }
+
+void LevelEditor::DrawFlag(const Flag& flag) {
+  assets_[kFlagModelIndex].model_
+    .Draw(
+      flag.flag_position_, 
+      { 1.0, 1.0, 1.0 }, 
+      flag.flag_rotation_
+    );
+}
+
+const bool LevelEditor::IsFlagMode() const {
+  return flag_mode_;
+}
+

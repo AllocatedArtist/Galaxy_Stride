@@ -30,6 +30,21 @@ struct LevelCoin {
   bool collected_;
 };
 
+struct Flag {
+  Vector3 flag_position_;
+  Quaternion flag_rotation_;
+  bool is_touched_;
+};
+
+enum ObjectType {
+  kPlayer,
+  kCoin,
+  kFlag,
+  kStaticModel
+};
+
+constexpr int kFlagModelIndex = 82;
+
 class LevelEditor {
 public:
   LevelEditor();
@@ -39,6 +54,7 @@ public:
   void UpdateThumbnails();
 
   void PlaceObjects(
+    Flag& flag,
     std::vector<LevelCoin>& coins, 
     std::vector<LevelMesh>& meshes, 
     FlyCamera& camera
@@ -47,24 +63,34 @@ public:
   void DrawThumbnails();
   void DrawAsset(const LevelMesh& mesh);
   void DrawCoins(const LevelCoin& coin);
+  void DrawFlag(const Flag& flag);
   
   void SelectObject(LevelMesh& mesh, FlyCamera& camera);
   void PlacePlayer(FlyCamera& camera);
 
   const bool IsPlayerSetMode() const;
+  const bool IsCoinMode() const;
+  const bool IsFlagMode() const;
 
   const float GetPlayerYaw() const;
   const Vector3 GetPlayerPosition() const;
-
-  const bool IsCoinMode() const;
 
   // 0, 90, 180, or 270
   void SetPlayerYaw(float yaw);
 
   void SetPlayerPosition(Vector3 position);
 
-  void Save(const std::vector<LevelMesh>& meshes);
-  void Load(std::vector<LevelMesh>& meshes);
+  void Save(
+    const Flag& flag,
+    const std::vector<LevelMesh>& meshes, 
+    const std::vector<LevelCoin>& coins
+  );
+
+  void Load(
+    Flag& flag,
+    std::vector<LevelMesh>& meshes,
+    std::vector<LevelCoin>& coins
+  );
 
   const std::string& GetCurrentFileSaveName() const;
 
@@ -74,6 +100,7 @@ private:
   std::string current_file_save_;
 private:
   bool coin_mode_;
+  bool flag_mode_;
 private:
   float player_angle_;
   Vector3 player_position_;
