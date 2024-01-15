@@ -165,9 +165,13 @@ bool OnContactAdded(
 
   if (obj1->getUserIndex() == PhysicsLayer::kCoinLayer) {
     if (obj2->getUserIndex() == PhysicsLayer::kPlayerLayer) {
-      LevelCoin* coin = 
-        (LevelCoin*)obj1->getUserPointer();
+      LevelCoin* coin = (LevelCoin*)obj1->getUserPointer();
       coin->collected_ = true;
+    }
+  } else if (obj1->getUserIndex() == PhysicsLayer::kFlagLayer) {
+    if (obj2->getUserIndex() == PhysicsLayer::kPlayerLayer) {
+      Flag* flag = (Flag*)obj1->getUserPointer();
+      flag->is_touched_ = true;
     }
   }
 

@@ -32,7 +32,8 @@ namespace conv {
 
 enum PhysicsLayer {
   kPlayerLayer,
-  kCoinLayer
+  kCoinLayer,
+  kFlagLayer
 };
 
 
