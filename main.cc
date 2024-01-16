@@ -1,5 +1,6 @@
 #include <raylib.h>
 
+#include "src/Game.h"
 #include "src/Model.h"
 #include "src/FlyCamera.h"
 #include "src/PhysicsWorld.h"
@@ -10,13 +11,13 @@
 #include <iostream>
 
 int main(void) {
-  SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-  InitWindow(1600, 1480, "Platformer");
+
+  constexpr bool kIsGameOnly = true;
+
+  SetConfigFlags(FLAG_FULLSCREEN_MODE);
+  InitWindow(0, 0, "Platformer");
 
   InitAudioDevice();
-
-  Sound coin_pickup = LoadSound("assets/sounds/coin.wav");
-
 
   FlyCamera camera({ 0.0, 2.0, -5.0 }, 0.1, 5.0);
   camera.GetCamera().SetYaw(90.0);
@@ -26,207 +27,86 @@ int main(void) {
   LevelEditor level_editor;
   level_editor.UpdateThumbnails();
 
-  std::vector<LevelMesh> meshes;
-  std::vector<LevelCoin> coins;
-  Flag flag {
-    .flag_position_ = { 1.0, 0.0, 0.0 },
-    .flag_rotation_ = QuaternionIdentity(),
-    .is_touched_ = false
-  };
-
   SetExitKey(KEY_NULL);
 
   bool saved = false;
   float save_timer = 0.f;
   float save_delay = 1.0f;
 
-  bool is_play_mode = false;
+  bool is_play_mode = kIsGameOnly;
   bool create_collision = true;
+ 
+  Game game(level_editor);
 
-  PhysicsWorld physics;
-  std::vector<RigidBody> mesh_bodies;
-  std::vector<std::unique_ptr<btCollisionShape>> mesh_colliders;
+  game.SetLevels({ "level_0.json", "level_1.json"});
 
-  std::vector<RigidBody> coin_bodies;
-  std::vector<std::unique_ptr<btCollisionShape>> coin_colliders;
+  int max_score = 0;
 
-  BoundingBox flag_bounds = level_editor
-    .GetAsset(kFlagModelIndex)
-    .model_
-    .GetBoundingBox();
+  if (kIsGameOnly) {
+    SetExitKey(KEY_ESCAPE);
+    level_editor.Load(
+      game.GetFlag(), 
+      game.GetMeshes(), 
+      game.GetCoins(), 
+      game.NextLevel().c_str()
+    );
+    max_score += game.GetCoins().size();
+  }
 
-  Vector3 flag_bound_size = Vector3Subtract(flag_bounds.max, flag_bounds.min);
-
-  RigidBody flag_body;
-  std::unique_ptr<btCollisionShape> flag_shape = 
-    physics.CreateBoxShape(flag_bound_size);
-
-  CharacterController player;
-  PlayerMovement player_movement;
-
-  int score = 0;
-  int prev_score = 0;
+  bool release_resources_game_over = false;
+  int final_game_score = 0;
     
   while (!WindowShouldClose()) { 
 
-    if (IsKeyPressed(KEY_F1)) {
+    if (
+      game.IsGameOver() && 
+      kIsGameOnly && 
+      game.GetFlag().is_touched_ && 
+      !release_resources_game_over
+    ) {
+      release_resources_game_over = true;
+      final_game_score += game.GetScore();
+      game.Unload();
+    }
+
+    if (game.GetFlag().is_touched_ && kIsGameOnly) {
+      final_game_score += game.GetScore();
+      game.Unload();
+      level_editor.Load(
+        game.GetFlag(), 
+        game.GetMeshes(), 
+        game.GetCoins(), 
+        game.NextLevel().c_str()
+      );
+      max_score += game.GetCoins().size();
+      game.Setup(level_editor);
+    } else if (game.GetFlag().is_touched_ && !kIsGameOnly) {
+      is_play_mode = false;
+      create_collision = true;
+      game.Unload();
+    }
+
+    if (IsKeyPressed(KEY_F1) && !kIsGameOnly) {
       is_play_mode = !is_play_mode;
       if (!is_play_mode) {
         create_collision = true;
-
-        mesh_colliders.clear();
-        coin_colliders.clear();
-
-        for (RigidBody& body : mesh_bodies) {
-          physics.ReleaseBody(&body);
-        }
-
-        for (RigidBody& body : coin_bodies) {
-          physics.ReleaseBody(&body);
-        }
-
-        physics.ReleaseBody(&flag_body);
-
-        for (LevelCoin& coin : coins) {
-          coin.collected_ = false;
-        }
-
-        prev_score = 0;
-        flag.is_touched_ = false;
-
-        mesh_bodies.clear();
-        coin_bodies.clear();
-
-        physics.ReleaseController(&player);
-
-        EnableCursor();
-        camera.GetCamera().SetPosition({ 0.f, 0.f, 0.f });
-      } else {
-        player_movement.ResetStamina();
-        DisableCursor();
+        game.Unload();
       }
     }
 
     if (is_play_mode && create_collision) {
       create_collision = false;
-      for (const LevelMesh& mesh : meshes) {
-        ModelComponent& model = level_editor.GetAsset(mesh.index_).model_;
-        BoundingBox bounds = model.GetBoundingBox();
-
-        Vector3 size = Vector3Subtract(bounds.max, bounds.min);
-        mesh_colliders.emplace_back(physics.CreateBoxShape(size));
-
-        std::unique_ptr<btCollisionShape>& box = mesh_colliders.back();
-        
-        mesh_bodies.emplace_back(physics.CreateRigidBody(
-          mesh.pos_,
-          box,
-          mesh.rotation_,
-          0.f
-        ));
-      }
-
-      for (LevelCoin& coin : coins) {
-        ModelComponent& model = level_editor.GetAsset(coin.index_).model_;
-        BoundingBox bounds = model.GetBoundingBox();
-
-        Vector3 size = Vector3Subtract(bounds.max, bounds.min);
-        coin_colliders.emplace_back(physics.CreateBoxShape(size));
-
-        std::unique_ptr<btCollisionShape>& box = coin_colliders.back();
-        
-        coin_bodies.emplace_back(physics.CreateRigidBody(
-          coin.pos_,
-          box,
-          coin.rotation_,
-          0.f
-        ));
-
-        RigidBody& body = coin_bodies.back();
-        body.rigid_body_->setCollisionFlags(
-          btCollisionObject::CF_NO_CONTACT_RESPONSE |
-          btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK
-        );
-        body.rigid_body_->setUserIndex(PhysicsLayer::kCoinLayer);
-        body.rigid_body_->setUserPointer(&coins[coin_bodies.size() - 1]);
-      }
-
-      flag_body = physics.CreateRigidBody(
-        flag.flag_position_, 
-        flag_shape, 
-        flag.flag_rotation_, 
-        0.f
-      );
-
-      flag_body.rigid_body_->setCollisionFlags(
-          btCollisionObject::CF_NO_CONTACT_RESPONSE |
-          btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK
-      );
-      flag_body.rigid_body_->setUserIndex(PhysicsLayer::kFlagLayer);
-      flag_body.rigid_body_->setUserPointer(&flag);
-
-      player = physics.CreateController(
-        0.25, 
-        1.5,
-        0.1, 
-        level_editor.GetPlayerPosition()
-      );
-
-      player.ghost_object_->setCollisionFlags(
-        player.ghost_object_->getCollisionFlags() |
-        btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK
-      );
-      player.ghost_object_->setUserIndex(PhysicsLayer::kPlayerLayer);
-
-      camera.GetCamera().SetPitch(0.f);
-      camera.GetCamera().SetYaw(level_editor.GetPlayerYaw());
+      game.Setup(level_editor);
     }
 
 
     if (is_play_mode) {
-      physics.Update(1.0 / 60.0);
-      camera.LookAround();
-      player_movement.Update(player, camera);
-
-      if (camera.GetCamera().GetPosition().y <= -10.f) {
-        player_movement.ResetStamina();
-
-        btTransform transform;
-        transform.setIdentity();
-
-        Vector3 player_pos = level_editor.GetPlayerPosition();
-        transform.setOrigin(btVector3(player_pos.x, player_pos.y, player_pos.z));
-
-        player.ghost_object_->setWorldTransform(transform);
-
-        camera.GetCamera().SetPitch(0.f);
-        camera.GetCamera().SetYaw(level_editor.GetPlayerYaw());
-
-        prev_score = 0;
-
-        for (LevelCoin& coin : coins) {
-          coin.collected_ = false;
-        }
-      }   
-
-      score = std::count_if(
-        coins.cbegin(), 
-        coins.cend(), 
-        [](const LevelCoin& coin){
-          return coin.collected_;
-        }
-      );
-
-      if (prev_score != score) {
-        prev_score = score;
-        PlaySound(coin_pickup);
-      }
+      game.Update(level_editor);
     }
 
     if (!is_play_mode) {
       level_editor.UpdateCamera(camera); 
-
-      level_editor.Save(flag, meshes, coins);
+      level_editor.Save(game.GetFlag(), game.GetMeshes(), game.GetCoins());
 
       if (
         IsKeyDown(KEY_LEFT_CONTROL) && 
@@ -236,13 +116,16 @@ int main(void) {
         saved = true; 
       }
 
-      level_editor.Load(flag, meshes, coins);
+      level_editor.Load(game.GetFlag(), game.GetMeshes(), game.GetCoins());
     }
      
     BeginDrawing(); 
     ClearBackground(BLACK);
 
-    BeginMode3D(camera.GetCamera().GetCamera()); 
+    Camera main_camera = 
+      is_play_mode ? game.GetCamera() : camera.GetCamera().GetCamera();
+
+    BeginMode3D(main_camera); 
 
     if (!is_play_mode) {
       level_editor.PlacePlayer(camera);
@@ -250,26 +133,31 @@ int main(void) {
       DrawGrid(20, 1.0);
 
       if (!level_editor.IsPlayerSetMode()) {
-        level_editor.PlaceObjects(flag, coins, meshes, camera);
+        level_editor.PlaceObjects(
+          game.GetFlag(), 
+          game.GetCoins(), 
+          game.GetMeshes(), 
+          camera
+        );
 
-        for (LevelMesh& mesh : meshes) {
+        for (LevelMesh& mesh : game.GetMeshes()) {
           level_editor.SelectObject(mesh, camera);
         }
       }
     }
 
-    for (const LevelCoin& coin : coins) {
+    for (const LevelCoin& coin : game.GetCoins()) {
       if (!coin.collected_) {
         level_editor.DrawCoins(coin);
       }
     }
 
-    for (const LevelMesh& mesh : meshes) {
+    for (const LevelMesh& mesh : game.GetMeshes()) {
       level_editor.DrawAsset(mesh);
     }
 
     if (!level_editor.IsFlagMode()) {
-      level_editor.DrawFlag(flag);
+      level_editor.DrawFlag(game.GetFlag());
     }
  
     EndMode3D();
@@ -293,8 +181,7 @@ int main(void) {
     }
 
     if (is_play_mode) {
-      DrawStamina(player_movement);
-      DrawText(TextFormat("SCORE: %d", score), 20, 90, 32, WHITE);
+      game.DrawUI();
     }
 
     if (level_editor.IsCoinMode()) {
@@ -303,39 +190,49 @@ int main(void) {
       DrawText("FLAG MODE ON", 400, 200, 32, RED);
     }
 
+    if (release_resources_game_over) {
+      DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), RAYWHITE);
+
+      int screen_width = GetScreenWidth();
+      int screen_height = GetScreenHeight();
+
+      const char* score_text = 
+        TextFormat("Score: %d/%d", final_game_score, max_score);
+
+
+      int center_x_1 = MeasureText("CONGRATULATIONS!", 48);
+      int center_x_2 = MeasureText(score_text, 48);
+      int center_x_3 = MeasureText("You can press Escape to exit.", 64);
+      DrawText(
+        "CONGRATULATIONS!", 
+        (screen_width / 2) - (center_x_1 / 2), 
+        (screen_height / 2) - 40, 
+        48, 
+        RED
+      );
+
+      DrawText(
+        score_text,
+        (screen_width / 2) - (center_x_2 / 2), 
+        (screen_height / 2), 
+        48, 
+        BLACK
+      );
+      DrawText(
+        "You can press Escape to exit.",
+        (screen_width / 2) - (center_x_3 / 2),
+        (screen_height / 2) + 200,
+        64,
+        BLACK
+      );
+    }
+
     DrawFPS(0, 0);
     
     EndDrawing(); 
   }
 
-  UnloadSound(coin_pickup);
   CloseAudioDevice();
-
-  mesh_colliders.clear();
-  coin_colliders.clear();
-
-  flag_shape.reset();
-
-  for (RigidBody& body : mesh_bodies) {
-    physics.ReleaseBody(&body);
-  }
-
-  for (RigidBody& body : coin_bodies) {
-    physics.ReleaseBody(&body);
-  }
-
-  if (flag_body.rigid_body_ != nullptr) {
-    physics.ReleaseBody(&flag_body);
-  }
-
-  mesh_bodies.clear();
-  coin_bodies.clear();
-
-  if (player.controller_ != nullptr) {
-    physics.ReleaseController(&player);
-  }
- 
-
   CloseWindow();
 
   return 0;
