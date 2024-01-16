@@ -698,86 +698,101 @@ void LevelEditor::Save(
 void LevelEditor::Load(
   Flag& flag,
   std::vector<LevelMesh>& meshes, 
-  std::vector<LevelCoin>& coins
+  std::vector<LevelCoin>& coins,
+  const char* filename
 ) {
-  if (IsFileDropped()) {
-    meshes.clear();
+
+  const char* load_file = nullptr;
+
+  if (IsFileDropped() && filename == nullptr) {
     FilePathList dropped = LoadDroppedFiles();
     if (IsFileExtension(dropped.paths[0], ".json")) {
-      std::ifstream level_file(dropped.paths[0]);
-      nlohmann::json contents = nlohmann::json::parse(level_file);
-
-      int index = 0;
-      for (auto& [key, value] : contents.items()) {
-        ObjectType type = value["type"];
-        switch (type) {
-          case kPlayer: {
-            std::vector<float> position = value["position"];
-            std::vector<float> rotation = value["rotation"];
-            player_position_ = Vector3 { 
-              position[0],
-              position[1],
-              position[2]
-            };
-            player_angle_ = rotation[0];
-            break;
-          }
-          case kStaticModel: {
-            std::vector<float> position = value["position"];
-            std::vector<float> rotation = value["rotation"];
-            int index = value["mesh"];
-
-            meshes.emplace_back(LevelMesh {
-              .index_ = index,
-              .pos_ = Vector3 { position[0], position[1], position[2] },
-              .rotation_ = Quaternion { 
-                rotation[0], 
-                rotation[1], 
-                rotation[2], 
-                rotation[3] 
-              },
-              .selected_ = false
-            });
-            break;
-          }
-          case kCoin: {
-            std::vector<float> position = value["position"];
-            std::vector<float> rotation = value["rotation"];
-            int index = value["mesh"];
-
-            coins.emplace_back(LevelCoin {
-              .index_ = index,
-              .pos_ = Vector3 { position[0], position[1], position[2] },
-              .rotation_ = Quaternion { 
-                rotation[0], 
-                rotation[1], 
-                rotation[2], 
-                rotation[3] 
-              },
-              .collected_ = false
-            });
-            break;
-          }
-          case kFlag: {
-            std::vector<float> position = value["position"];
-            std::vector<float> rotation = value["rotation"];
-
-            flag.flag_position_ = { position[0], position[1], position[2] };
-            flag.flag_rotation_ = { 
-              rotation[0], 
-              rotation[1], 
-              rotation[2], 
-              rotation[3] 
-            };
-            flag.is_touched_ = false;
-            break;
-          }
-        }
-      }    
+      load_file = dropped.paths[0];
     }
     UnloadDroppedFiles(dropped);
   }
-}
+
+  if (filename != nullptr) {
+    load_file = filename;
+  }
+
+  if (load_file == nullptr) {
+    return;
+  }
+
+  meshes.clear();
+  coins.clear();
+  std::ifstream level_file(load_file);
+  nlohmann::json contents = nlohmann::json::parse(level_file);
+
+  int index = 0;
+  for (auto& [key, value] : contents.items()) {
+    ObjectType type = value["type"];
+    switch (type) {
+      case kPlayer: {
+        std::vector<float> position = value["position"];
+        std::vector<float> rotation = value["rotation"];
+        player_position_ = Vector3 { 
+          position[0],
+          position[1],
+          position[2]
+        };
+        player_angle_ = rotation[0];
+        break;
+      }
+      case kStaticModel: {
+        std::vector<float> position = value["position"];
+        std::vector<float> rotation = value["rotation"];
+        int index = value["mesh"];
+
+        meshes.emplace_back(LevelMesh {
+          .index_ = index,
+          .pos_ = Vector3 { position[0], position[1], position[2] },
+          .rotation_ = Quaternion { 
+            rotation[0], 
+            rotation[1], 
+            rotation[2], 
+            rotation[3] 
+          },
+          .selected_ = false
+        });
+        break;
+      }
+      case kCoin: {
+        std::vector<float> position = value["position"];
+        std::vector<float> rotation = value["rotation"];
+        int index = value["mesh"];
+
+        coins.emplace_back(LevelCoin {
+          .index_ = index,
+          .pos_ = Vector3 { position[0], position[1], position[2] },
+          .rotation_ = Quaternion { 
+            rotation[0], 
+            rotation[1], 
+            rotation[2], 
+            rotation[3] 
+          },
+          .collected_ = false
+        });
+        break;
+      }
+      case kFlag: {
+        std::vector<float> position = value["position"];
+        std::vector<float> rotation = value["rotation"];
+
+        flag.flag_position_ = { position[0], position[1], position[2] };
+        flag.flag_rotation_ = { 
+          rotation[0], 
+          rotation[1], 
+          rotation[2], 
+          rotation[3] 
+        };
+        flag.is_touched_ = false;
+        break;
+      }
+    }
+  }    
+}  
 
 const std::string& LevelEditor::GetCurrentFileSaveName() const {
   return current_file_save_; 

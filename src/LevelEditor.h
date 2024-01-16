@@ -89,7 +89,8 @@ public:
   void Load(
     Flag& flag,
     std::vector<LevelMesh>& meshes,
-    std::vector<LevelCoin>& coins
+    std::vector<LevelCoin>& coins,
+    const char* filename = nullptr
   );
 
   const std::string& GetCurrentFileSaveName() const;
