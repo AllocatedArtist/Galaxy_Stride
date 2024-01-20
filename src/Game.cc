@@ -1,6 +1,5 @@
 #include "Game.h"
 #include <algorithm>
-#include <iostream>
 
 Game::Game(LevelEditor& editor) {
   BoundingBox flag_bounds = editor
@@ -15,6 +14,9 @@ Game::Game(LevelEditor& editor) {
 
   coin_pickup_sfx_ = LoadSound("assets/sounds/coin.wav");
   loaded_ = false;
+
+  previous_score_ = 0;
+  current_score_ = 0;
 }
 
 void Game::Setup(LevelEditor& editor) {
@@ -246,3 +248,8 @@ const bool Game::IsGameOver() const {
 const int Game::GetScore() const {
   return current_score_;
 }
+
+FlyCamera& Game::GetFlyCamera() {
+  return camera_;
+}
+

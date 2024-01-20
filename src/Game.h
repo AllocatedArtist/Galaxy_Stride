@@ -13,6 +13,7 @@ public:
   void SetLevels(const std::vector<std::string>& levels);
 
   Camera GetCamera();
+  FlyCamera& GetFlyCamera();
 
   void Setup(LevelEditor& editor);
   void Unload();
