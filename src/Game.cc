@@ -245,6 +245,11 @@ void Game::SetLevels(const std::vector<std::string>& levels) {
   //level vector is popped, which is why it is reversed here so that
   //level_0 is the first to be removed
   std::reverse(level_filenames_.begin(), level_filenames_.end());
+  std::for_each(level_filenames_.begin(), level_filenames_.end(), 
+    [](std::string& file) {
+      file = "assets\\levels" + file;
+    }
+  );
 }
 
 const bool Game::IsGameOver() const {
