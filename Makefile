@@ -12,6 +12,7 @@ HEADERS = -I src
 INCLUDE = -I build/raylib/raylib/include \
 					-I libs/bullet3/src \
 					-I libs/json/single_include/nlohmann \
+					-I libs/glad
 
 FLAGS = -Wall \
 				-std=c++17 \
@@ -26,6 +27,7 @@ OBJ = build/out/main.o \
 			build/out/PlayerMovement.o \
 			build/out/LevelEditor.o \
 			build/out/Game.o \
+			build/out/Skybox.o \
 
 GPP = g++
 
