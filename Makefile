@@ -6,6 +6,7 @@ LIB = -L build/raylib/raylib \
 			-l BulletDynamics \
 			-l BulletCollision \
 			-l LinearMath \
+			-static-libstdc++ \
 
 HEADERS = -I src
 
@@ -17,7 +18,8 @@ INCLUDE = -I build/raylib/raylib/include \
 FLAGS = -Wall \
 				-std=c++17 \
 				-O0 \
-				-g
+				-g \
+				#-mwindows \
 
 OBJ = build/out/main.o \
 			build/out/Camera.o \
