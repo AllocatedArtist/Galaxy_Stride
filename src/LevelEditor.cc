@@ -689,7 +689,7 @@ void LevelEditor::Save(
       current_file_save_ = TextFormat("level_%d.json", level_file_index);
       
       std::ofstream file;
-      file.open(current_file_save_);
+      file.open(loaded_file_.empty() ? current_file_save_ : loaded_file_);
       file << level_content_.dump(2);
       file.close();
     }
@@ -719,6 +719,8 @@ void LevelEditor::Load(
   if (load_file == nullptr) {
     return;
   }
+
+  loaded_file_ = load_file;
 
   meshes.clear();
   coins.clear();
@@ -798,6 +800,11 @@ const std::string& LevelEditor::GetCurrentFileSaveName() const {
   return current_file_save_; 
 }
 
+const std::string& LevelEditor::GetCurrentLoadedFileSaveName() const {
+  return loaded_file_;
+}
+
+
 LevelAsset& LevelEditor::GetAsset(int index) {
   return assets_[index];
 }
@@ -817,5 +824,15 @@ void LevelEditor::DrawFlag(const Flag& flag) {
 
 const bool LevelEditor::IsFlagMode() const {
   return flag_mode_;
+}
+
+void LevelEditor::ResetModes() {
+  coin_mode_ = false;
+  set_player_ = false;
+  flag_mode_ = false;
+}
+
+void LevelEditor::ResetLoadedFile() {
+  loaded_file_ = "";
 }
 

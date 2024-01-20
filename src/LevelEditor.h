@@ -94,11 +94,17 @@ public:
   );
 
   const std::string& GetCurrentFileSaveName() const;
+  const std::string& GetCurrentLoadedFileSaveName() const;
 
   LevelAsset& GetAsset(int index);
+
+  void ResetLoadedFile();
+
+  void ResetModes();
 private:
   nlohmann::json level_content_;
   std::string current_file_save_;
+  std::string loaded_file_;
 private:
   bool coin_mode_;
   bool flag_mode_;
