@@ -1,23 +1,34 @@
+#define GLSL_VERSION 330
 #include <raylib.h>
 
 #include "src/Game.h"
-#include "src/Model.h"
 #include "src/FlyCamera.h"
-#include "src/PhysicsWorld.h"
-#include "src/PlayerMovement.h"
 #include "src/LevelEditor.h"
-
-#include <algorithm>
-#include <iostream>
+#include "src/Skybox.h"
 
 int main(void) {
 
   constexpr bool kIsGameOnly = true;
 
-  SetConfigFlags(FLAG_FULLSCREEN_MODE);
-  InitWindow(0, 0, "Platformer");
+  ConfigFlags flags;
+
+  int window_width = 0;
+  int window_height = 0;
+
+  if (kIsGameOnly) {
+    flags = ConfigFlags::FLAG_FULLSCREEN_MODE;
+  } else {
+    window_width = 1600;
+    window_height = 1480;
+    flags = ConfigFlags::FLAG_WINDOW_RESIZABLE;
+  }
+
+  SetConfigFlags(flags);
+  InitWindow(window_width, window_height, "Platformer");
 
   InitAudioDevice();
+
+  Skybox skybox;
 
   FlyCamera camera({ 0.0, 2.0, -5.0 }, 0.1, 5.0);
   camera.GetCamera().SetYaw(90.0);
@@ -55,9 +66,8 @@ int main(void) {
 
   bool release_resources_game_over = false;
   int final_game_score = 0;
-    
+ 
   while (!WindowShouldClose()) { 
-
     if (
       game.IsGameOver() && 
       kIsGameOnly && 
@@ -124,7 +134,7 @@ int main(void) {
 
     Camera main_camera = 
       is_play_mode ? game.GetCamera() : camera.GetCamera().GetCamera();
-
+  
     BeginMode3D(main_camera); 
 
     if (!is_play_mode) {
@@ -153,12 +163,16 @@ int main(void) {
     }
 
     for (const LevelMesh& mesh : game.GetMeshes()) {
-      level_editor.DrawAsset(mesh);
+      level_editor.DrawAsset(mesh, is_play_mode);
     }
 
     if (!level_editor.IsFlagMode()) {
       level_editor.DrawFlag(game.GetFlag());
     }
+
+    rlDisableBackfaceCulling();
+    skybox.Draw(is_play_mode ? game.GetFlyCamera() : camera);
+    rlEnableBackfaceCulling();
  
     EndMode3D();
 
