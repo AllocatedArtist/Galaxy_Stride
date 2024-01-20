@@ -274,7 +274,7 @@ void LevelEditor::DrawObjectBounds(const LevelMesh& mesh) {
   DrawLine3D(p2, p8, GREEN);
 }
 
-void LevelEditor::DrawAsset(const LevelMesh& mesh) {
+void LevelEditor::DrawAsset(const LevelMesh& mesh, bool play_mode) {
   assets_[mesh.index_].model_.Draw(
     mesh.pos_, 
     { 1.0, 1.0, 1.0 }, 
@@ -285,7 +285,7 @@ void LevelEditor::DrawAsset(const LevelMesh& mesh) {
     DrawObjectBounds(mesh);
   }
 
-  if (IsKeyDown(KEY_C)) {
+  if (IsKeyDown(KEY_C) && !play_mode) {
     DrawObjectBounds(mesh);
   }
 }

@@ -61,7 +61,7 @@ public:
   );
 
   void DrawThumbnails();
-  void DrawAsset(const LevelMesh& mesh);
+  void DrawAsset(const LevelMesh& mesh, bool play_mode);
   void DrawCoins(const LevelCoin& coin);
   void DrawFlag(const Flag& flag);
   
