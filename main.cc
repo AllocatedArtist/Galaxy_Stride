@@ -8,7 +8,7 @@
 
 int main(void) {
 
-  constexpr bool kIsGameOnly = true;
+  constexpr bool kIsGameOnly = false;
 
   ConfigFlags flags;
 
@@ -101,7 +101,13 @@ int main(void) {
       if (!is_play_mode) {
         create_collision = true;
         game.Unload();
+      } else {
+        level_editor.ResetModes();
       }
+    }
+
+    if (IsKeyPressed(KEY_F2) && !kIsGameOnly) {
+      level_editor.ResetLoadedFile();
     }
 
     if (is_play_mode && create_collision) {
@@ -184,6 +190,9 @@ int main(void) {
       }
 
       const char* filename = level_editor.GetCurrentFileSaveName().c_str();
+      if (!level_editor.GetCurrentLoadedFileSaveName().empty()) {
+        filename = level_editor.GetCurrentLoadedFileSaveName().c_str();
+      }
       DrawText(
         TextFormat("Saved to: %s", filename),
         500, 100, 24, RED
