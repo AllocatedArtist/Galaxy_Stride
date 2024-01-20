@@ -17,6 +17,12 @@ Game::Game(LevelEditor& editor) {
 
   previous_score_ = 0;
   current_score_ = 0;
+
+  flag_ = Flag {
+    .flag_position_ = { 1.0, 0.0, 0.0 },
+    .flag_rotation_ = Quaternion { 0.0, 0.0, 0.0, 1.0 },
+    .is_touched_ = false
+  };
 }
 
 void Game::Setup(LevelEditor& editor) {
