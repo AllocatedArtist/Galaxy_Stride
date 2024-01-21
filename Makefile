@@ -17,9 +17,9 @@ INCLUDE = -I build/raylib/raylib/include \
 
 FLAGS = -Wall \
 				-std=c++17 \
-				-O0 \
-				-g \
-				#-mwindows \
+				-Ofast \
+				-mwindows \
+				#-g \
 
 OBJ = build/out/main.o \
 			build/out/Camera.o \
