@@ -1,4 +1,7 @@
 #include "Game.h"
+
+#include <raylib-physfs.h>
+
 #include <algorithm>
 
 Game::Game(LevelEditor& editor) {
@@ -12,7 +15,10 @@ Game::Game(LevelEditor& editor) {
   flag_shape_ = physics_.CreateBoxShape(flag_bound_size);
   camera_ = FlyCamera({ 0.0, 2.0, -5.0 }, 0.1, 5.0);
 
-  coin_pickup_sfx_ = LoadSound("assets/sounds/coin.wav");
+  Wave wave = LoadWaveFromPhysFS("assets/sounds/coin.wav");
+  coin_pickup_sfx_ = LoadSoundFromWave(wave);
+  UnloadWave(wave);
+
   loaded_ = false;
 
   previous_score_ = 0;
