@@ -1,6 +1,8 @@
 #define GLSL_VERSION 330
 #include <raylib.h>
 
+#include <raylib-physfs.h>
+
 #include "src/Game.h"
 #include "src/FlyCamera.h"
 #include "src/LevelEditor.h"
@@ -20,7 +22,15 @@ int main(void) {
 
   InitAudioDevice();
 
-  Music song = LoadMusicStream("assets\\sounds\\Blustery_Night.mp3");
+  if (!InitPhysFS()) {
+    exit(-1);
+  }
+
+  if (!MountPhysFS("assets.PAK", "assets")) {
+    exit(-1);
+  }
+
+  Music song = LoadMusicStreamFromPhysFS("assets/sounds/Blustery_Night.mp3");
   SetMusicVolume(song, 0.2);
 
   Skybox skybox;
@@ -43,11 +53,11 @@ int main(void) {
   Game game(level_editor);
 
   game.SetLevels({ 
-    "assets\\levels\\level_0.json", 
-    "assets\\levels\\level_2.json",
-    "assets\\levels\\level_1.json",
-    "assets\\levels\\level_3.json",
-    "assets\\levels\\level_4.json",
+    "assets/levels/level_0.json", 
+    "assets/levels/level_2.json",
+    "assets/levels/level_1.json",
+    "assets/levels/level_3.json",
+    "assets/levels/level_4.json",
   });
 
 
@@ -402,6 +412,8 @@ int main(void) {
     
     EndDrawing(); 
   }
+
+  ClosePhysFS();
 
   UnloadMusicStream(song);
   CloseAudioDevice();
