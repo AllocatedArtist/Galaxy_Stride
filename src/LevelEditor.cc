@@ -1,5 +1,6 @@
 #include "LevelEditor.h"
 
+#include <raylib-physfs.h>
 #include <fstream>
 
 LevelEditor::LevelEditor() {
@@ -8,7 +9,8 @@ LevelEditor::LevelEditor() {
   rot_angle_ = 0.f;
 
 
-  FilePathList model_paths = LoadDirectoryFiles("assets\\models");
+  FilePathList model_paths = LoadDirectoryFiles("kenney-assets");
+  
 
   for (int i = 0; i < model_paths.count; ++i) {
     assets_.emplace_back(LevelAsset {
@@ -724,8 +726,14 @@ void LevelEditor::Load(
 
   meshes.clear();
   coins.clear();
+
   std::ifstream level_file(load_file);
-  nlohmann::json contents = nlohmann::json::parse(level_file);
+  nlohmann::json contents;
+  if (filename != nullptr) {
+    contents = nlohmann::json::parse(LoadFileTextFromPhysFS(load_file));
+  } else {
+    contents = nlohmann::json::parse(level_file);
+  }
 
   int index = 0;
   for (auto& [key, value] : contents.items()) {

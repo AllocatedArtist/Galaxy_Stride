@@ -3,6 +3,8 @@
 #include <array>
 #include <glad.h>
 
+#include <raylib-physfs.h>
+
 Skybox::Skybox() {
   glDepthFunc(GL_LEQUAL);
 
@@ -10,17 +12,17 @@ Skybox::Skybox() {
   glBindTexture(GL_TEXTURE_CUBE_MAP, texture_id_);
  
   std::array<const char*, 6> skybox_files {
-    "assets\\skybox\\corona_rt.png",
-    "assets\\skybox\\corona_lf.png",
-    "assets\\skybox\\corona_up.png",
-    "assets\\skybox\\corona_dn.png",
-    "assets\\skybox\\corona_ft.png",
-    "assets\\skybox\\corona_bk.png",
+    "assets/skybox/corona_rt.png",
+    "assets/skybox/corona_lf.png",
+    "assets/skybox/corona_up.png",
+    "assets/skybox/corona_dn.png",
+    "assets/skybox/corona_ft.png",
+    "assets/skybox/corona_bk.png",
   };
 
   for (int i = 0; i < skybox_files.size(); ++i) {
     const char* filename = skybox_files[i];
-    Image image = LoadImage(filename);
+    Image image = LoadImageFromPhysFS(filename);
 
     if (i != 2 && i != 3) {
       ImageFlipHorizontal(&image);
@@ -55,7 +57,7 @@ Skybox::Skybox() {
 
   glBindTexture(GL_TEXTURE_CUBE_MAP, 0); 
 
-  skybox_shader_ = LoadShader(
+  skybox_shader_ = LoadShaderFromPhysFS(
     "assets/shaders/skybox.vert", 
     "assets/shaders/skybox.frag"
   );
