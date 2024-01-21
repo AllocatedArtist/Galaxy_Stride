@@ -1,5 +1,7 @@
 LIB = -L build/raylib/raylib \
 			-L build/bullet/lib \
+			-L build/physfs \
+			-l physfs \
 			-l raylib \
 			-l gdi32 \
 			-l winmm \
@@ -13,7 +15,9 @@ HEADERS = -I src
 INCLUDE = -I build/raylib/raylib/include \
 					-I libs/bullet3/src \
 					-I libs/json/single_include/nlohmann \
-					-I libs/glad
+					-I libs/glad \
+					-I libs/raylib-physfs \
+					-I libs/physfs/src \
 
 FLAGS = -Wall \
 				-std=c++17 \
@@ -21,7 +25,8 @@ FLAGS = -Wall \
 				-mwindows \
 				#-g \
 
-OBJ = build/out/main.o \
+OBJ = build/out/raylib-physfs.o \
+			build/out/main.o \
 			build/out/Camera.o \
 			build/out/FlyCamera.o \
 			build/out/Model.o \
@@ -42,7 +47,7 @@ build/out/%.o: %.cc
 
 build/out/%.o: src/%.cc
 	echo "$< -> $@"
-	$(GPP) -c $< $(INCLUDE) -o $@
+	$(GPP) -c $< $(INCLUDE) -o $@ -fpermissive
 
 build_run:
 	make
