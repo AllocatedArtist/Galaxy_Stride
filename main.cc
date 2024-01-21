@@ -8,25 +8,20 @@
 
 int main(void) {
 
-  constexpr bool kIsGameOnly = false;
+  constexpr bool kIsGameOnly = true;
 
   ConfigFlags flags;
 
   int window_width = 0;
   int window_height = 0;
 
-  if (kIsGameOnly) {
-    flags = ConfigFlags::FLAG_FULLSCREEN_MODE;
-  } else {
-    window_width = 1600;
-    window_height = 1480;
-    flags = ConfigFlags::FLAG_WINDOW_RESIZABLE;
-  }
-
-  SetConfigFlags(flags);
-  InitWindow(window_width, window_height, "Platformer");
+  SetConfigFlags(ConfigFlags::FLAG_BORDERLESS_WINDOWED_MODE);
+  InitWindow(window_width, window_height, "Galaxy Stride");
 
   InitAudioDevice();
+
+  Music song = LoadMusicStream("assets\\sounds\\Blustery_Night.mp3");
+  SetMusicVolume(song, 0.2);
 
   Skybox skybox;
 
@@ -38,8 +33,6 @@ int main(void) {
   LevelEditor level_editor;
   level_editor.UpdateThumbnails();
 
-  SetExitKey(KEY_NULL);
-
   bool saved = false;
   float save_timer = 0.f;
   float save_delay = 1.0f;
@@ -49,25 +42,47 @@ int main(void) {
  
   Game game(level_editor);
 
-  game.SetLevels({ "level_0.json", "level_1.json"});
+  game.SetLevels({ 
+    "assets\\levels\\level_0.json", 
+    "assets\\levels\\level_2.json",
+    "assets\\levels\\level_1.json",
+    "assets\\levels\\level_3.json",
+    "assets\\levels\\level_4.json",
+  });
+
 
   int max_score = 0;
 
-  if (kIsGameOnly) {
-    SetExitKey(KEY_ESCAPE);
-    level_editor.Load(
-      game.GetFlag(), 
-      game.GetMeshes(), 
-      game.GetCoins(), 
-      game.NextLevel().c_str()
-    );
-    max_score += game.GetCoins().size();
-  }
-
+  bool menu = true;
+  bool game_started = false;
   bool release_resources_game_over = false;
   int final_game_score = 0;
+
+  SetExitKey(KEY_ESCAPE);
+  level_editor.Load(
+    game.GetFlag(), 
+    game.GetMeshes(), 
+    game.GetCoins(), 
+    game.NextLevel().c_str()
+  );
+
  
   while (!WindowShouldClose()) { 
+
+    if (game_started && kIsGameOnly) {
+      game_started = false;  
+      max_score += game.GetCoins().size();
+      song.looping = true;
+      PlayMusicStream(song);
+    }
+
+    if (kIsGameOnly && !menu) {
+      float pan = sinf((float)GetTime() * 0.3);
+      SetMusicPan(song, pan);
+    }
+
+    UpdateMusicStream(song);
+
     if (
       game.IsGameOver() && 
       kIsGameOnly && 
@@ -110,13 +125,17 @@ int main(void) {
       level_editor.ResetLoadedFile();
     }
 
+    if (IsKeyPressed(KEY_F3) && !kIsGameOnly) {
+      ToggleFullscreen();
+    }
+
     if (is_play_mode && create_collision) {
       create_collision = false;
       game.Setup(level_editor);
     }
 
 
-    if (is_play_mode) {
+    if (is_play_mode && !menu) {
       game.Update(level_editor);
     }
 
@@ -207,6 +226,134 @@ int main(void) {
       game.DrawUI();
     }
 
+    if (menu) {
+      ShowCursor();
+      DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), RAYWHITE);
+      int screen_width = GetScreenWidth();
+      int screen_height = GetScreenHeight();
+
+      int center_x_1 = MeasureText("Galaxy Stride", 128);
+      int center_x_2 = MeasureText("Collect Coins", 48);
+
+      int center_x_3 = MeasureText("WASD - Move", 48);
+      int center_x_4 = MeasureText("Mouse - Look Around", 48);
+      int center_x_5 = MeasureText("Left Shift to Run", 48);
+      int center_x_6 = MeasureText("Left Control to Crouch", 48);
+
+      int center_x_7 = MeasureText(
+        "Running and then crouching performs a slide.", 
+        48
+      );
+
+      int center_x_8 = MeasureText(
+        "Sliding and then jumping allows you to jump farther.",
+        48
+      );
+
+      int center_x_9 = MeasureText(
+        "Watch your stamina.",
+        48
+      );
+
+      int center_x_10 = MeasureText(
+        "Press Enter to start the game.",
+        48
+      );
+
+
+      int center_x_11 = MeasureText(
+        "Press Escape at any point to Quit.",
+        48
+      );
+
+
+      DrawText(
+        "Galaxy Stride", 
+        (GetScreenWidth() / 2) - (center_x_1 / 2), 
+        100, 
+        128, 
+        BLACK
+      );
+
+      DrawText(
+        "WASD - Move", 
+        (GetScreenWidth() / 2) - (center_x_3 / 2),
+        300, 
+        48,
+        BLACK 
+      );
+
+      DrawText(
+        "Mouse - Look Around", 
+        (GetScreenWidth() / 2) - (center_x_4 / 2),
+        400, 
+        48,
+        BLACK 
+      );
+
+      DrawText(
+        "Left Shift to Run", 
+        (GetScreenWidth() / 2) - (center_x_5 / 2),
+        500, 
+        48,
+        BLACK 
+      );
+
+      DrawText(
+        "Left Control to Crouch", 
+        (GetScreenWidth() / 2) - (center_x_6 / 2),
+        600, 
+        48,
+        BLACK 
+      );
+
+      DrawText(
+        "Running and then crouching performs a slide.", 
+        (GetScreenWidth() / 2) - (center_x_7 / 2),
+        700, 
+        48,
+        BLACK 
+      );
+
+      DrawText(
+        "Sliding and then jumping allows you to jump farther.",
+        (GetScreenWidth() / 2) - (center_x_8 / 2),
+        800, 
+        48,
+        BLACK 
+      );
+
+      DrawText(
+        "Watch your stamina.",
+        (GetScreenWidth() / 2) - (center_x_9 / 2),
+        900, 
+        48,
+        RED 
+      );
+
+      DrawText(
+        "Press Enter to start the game.",
+        (GetScreenWidth() / 2) - (center_x_10 / 2),
+        1100, 
+        48,
+        BLACK 
+      );
+
+      DrawText(
+        "Press Escape at any point to Quit.",
+        (GetScreenWidth() / 2) - (center_x_11 / 2),
+        1200, 
+        48,
+        BLACK 
+      );
+
+      if (IsKeyPressed(KEY_ENTER)) {
+        DisableCursor();
+        menu = false;
+        game_started = true;
+      }
+    }
+
     if (level_editor.IsCoinMode()) {
       DrawText("COIN MODE ON", 400, 200, 32, RED);
     } else if (level_editor.IsFlagMode()) {
@@ -214,6 +361,7 @@ int main(void) {
     }
 
     if (release_resources_game_over) {
+      StopMusicStream(song);
       DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), RAYWHITE);
 
       int screen_width = GetScreenWidth();
@@ -255,6 +403,7 @@ int main(void) {
     EndDrawing(); 
   }
 
+  UnloadMusicStream(song);
   CloseAudioDevice();
   CloseWindow();
 
