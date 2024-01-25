@@ -137,6 +137,12 @@ Skybox::Skybox() {
   glBindVertexArray(0);
 }
 
+Skybox::~Skybox() {
+  glDeleteVertexArrays(1, &cube_vao_);
+  glDeleteBuffers(1, &cube_vbo_);
+}
+
+
 void Skybox::Draw(FlyCamera& camera) {
 
   Vector3 position = camera.GetCamera().GetPosition();

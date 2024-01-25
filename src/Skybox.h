@@ -10,6 +10,7 @@
 class Skybox {
 public:
   Skybox();
+  ~Skybox();
   void Draw(FlyCamera& camera);
 private:
   uint32_t texture_id_;
