@@ -1,7 +1,5 @@
 #include "PlayerMovement.h"
 
-#include <iostream>
-
 PlayerMovement::PlayerMovement() {
   walk_ = Vector3Zero();  
 
@@ -25,7 +23,7 @@ PlayerMovement::PlayerMovement() {
   max_stamina_ = 50.0;
   stamina_ = max_stamina_;
 
-  sprint_stamina_drain_ = 2.5;
+  sprint_stamina_drain_ = 1.5;
   slide_stamina_drain_ = 5.0;
   slide_jump_stamina_drain_ = 4.0;
 
@@ -66,10 +64,6 @@ void PlayerMovement::Update(CharacterController& player, FlyCamera& camera) {
       if (player.controller_->onGround()) { 
         current_speed_ = Lerp(current_speed_, walk_speed_, 0.2 / 10.0);
       }
-    }
-
-    if (sprint_) {
-      stamina_ = Lerp(stamina_, stamina_ - sprint_stamina_drain_, 0.1);
     }
 
     float speed_magnitude = Vector3Length(walk_);
@@ -128,7 +122,7 @@ void PlayerMovement::Update(CharacterController& player, FlyCamera& camera) {
     }
 
     if (speed_magnitude < stamina_regen_threshold && !sliding_) {
-      stamina_ = Lerp(stamina_, max_stamina_ + 1, 1.0 * GetFrameTime());
+      stamina_ = Lerp(stamina_, max_stamina_ + 1, 2.0 * GetFrameTime());
     }  
 
     if (!Vector3Equals(move_dir, Vector3Zero()) && !sliding_) {
@@ -154,6 +148,10 @@ void PlayerMovement::Update(CharacterController& player, FlyCamera& camera) {
       float fov = camera.GetCamera().GetFOV();
       fov = Lerp(fov, 90.f, 0.8f / 10.0);
       camera.GetCamera().SetFOV(fov);
+    }
+
+    if (sprint_ && speed_magnitude > 0.01) {
+      stamina_ = Lerp(stamina_, stamina_ - sprint_stamina_drain_, 0.1);
     }
 
 

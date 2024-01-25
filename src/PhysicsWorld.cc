@@ -1,7 +1,5 @@
 #include "PhysicsWorld.h"
 
-#include <iostream>
-
 PhysicsWorld::PhysicsWorld() {
   config_ = std::make_unique<btDefaultCollisionConfiguration>();
   dispatcher_ = std::make_unique<btCollisionDispatcher>(config_.get());
