@@ -736,6 +736,8 @@ void LevelEditor::Load(
     file_contents[file_size] = '\0';
 
     contents = nlohmann::json::parse(std::string(file_contents));
+
+    UnloadFileData(file_data);
   } else {
     std::ifstream level_file(load_file);
     contents = nlohmann::json::parse(level_file);
