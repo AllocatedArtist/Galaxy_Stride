@@ -1,14 +1,15 @@
 LIB = -L build/raylib/raylib \
 			-L build/bullet/lib \
 			-L build/physfs \
+			-l stdc++ \
+			-static-libstdc++ \
 			-l physfs \
 			-l raylib \
 			-l gdi32 \
 			-l winmm \
 			-l BulletDynamics \
 			-l BulletCollision \
-			-l LinearMath \
-			-static-libstdc++ \
+			-l LinearMath 
 
 HEADERS = -I src
 
@@ -18,8 +19,10 @@ INCLUDE = -I build/raylib/raylib/include \
 					-I libs/glad \
 					-I libs/raylib-physfs \
 					-I libs/physfs/src \
+					-I libs/tinygltf
 
 FLAGS = -Wall \
+				-static \
 				-std=c++17 \
 				-Ofast \
 				-mwindows \
@@ -35,6 +38,9 @@ OBJ = build/out/raylib-physfs.o \
 			build/out/LevelEditor.o \
 			build/out/Game.o \
 			build/out/Skybox.o \
+			build/out/tiny_gltf.o \
+			build/out/CustomModelLoader.o \
+
 
 GPP = g++
 
