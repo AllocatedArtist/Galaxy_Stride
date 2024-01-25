@@ -294,118 +294,118 @@ int main(void) {
       int screen_width = GetScreenWidth();
       int screen_height = GetScreenHeight();
 
-      int center_x_1 = MeasureText("Galaxy Stride", 128);
-      int center_x_2 = MeasureText("Collect Coins", 48);
+      int center_x_1 = MeasureText("Galaxy Stride", 100);
+      int center_x_2 = MeasureText("Collect Coins", 36);
 
-      int center_x_3 = MeasureText("WASD - Move", 48);
-      int center_x_4 = MeasureText("Mouse - Look Around", 48);
-      int center_x_5 = MeasureText("Left Shift to Run", 48);
-      int center_x_6 = MeasureText("Left Control to Crouch", 48);
+      int center_x_3 = MeasureText("WASD - Move", 36);
+      int center_x_4 = MeasureText("Mouse - Look Around", 36);
+      int center_x_5 = MeasureText("Left Shift to Run", 36);
+      int center_x_6 = MeasureText("Left Control to Crouch", 36);
 
       int center_x_7 = MeasureText(
         "Running and then crouching performs a slide.", 
-        48
+        36
       );
 
       int center_x_8 = MeasureText(
         "Sliding and then jumping allows you to jump farther.",
-        48
+        36
       );
 
       int center_x_9 = MeasureText(
         "Watch your stamina.",
-        48
+        36
       );
 
       int center_x_10 = MeasureText(
         "Press Enter to start the game.",
-        48
+        36
       );
 
 
       int center_x_11 = MeasureText(
         "Press Escape at any point to Quit.",
-        48
+        36
       );
 
 
       DrawText(
         "Galaxy Stride", 
         (GetScreenWidth() / 2) - (center_x_1 / 2), 
+        75, 
         100, 
-        128, 
         BLACK
       );
 
       DrawText(
         "WASD - Move", 
         (GetScreenWidth() / 2) - (center_x_3 / 2),
-        300, 
-        48,
+        200, 
+        36,
         BLACK 
       );
 
       DrawText(
         "Mouse - Look Around", 
         (GetScreenWidth() / 2) - (center_x_4 / 2),
-        400, 
-        48,
+        300, 
+        36,
         BLACK 
       );
 
       DrawText(
         "Left Shift to Run", 
         (GetScreenWidth() / 2) - (center_x_5 / 2),
-        500, 
-        48,
+        400, 
+        36,
         BLACK 
       );
 
       DrawText(
         "Left Control to Crouch", 
         (GetScreenWidth() / 2) - (center_x_6 / 2),
-        600, 
-        48,
+        500, 
+        36,
         BLACK 
       );
 
       DrawText(
         "Running and then crouching performs a slide.", 
         (GetScreenWidth() / 2) - (center_x_7 / 2),
-        700, 
-        48,
+        600, 
+        36,
         BLACK 
       );
 
       DrawText(
         "Sliding and then jumping allows you to jump farther.",
         (GetScreenWidth() / 2) - (center_x_8 / 2),
-        800, 
-        48,
+        700, 
+        36,
         BLACK 
       );
 
       DrawText(
         "Watch your stamina.",
         (GetScreenWidth() / 2) - (center_x_9 / 2),
-        900, 
-        48,
+        800, 
+        36,
         RED 
       );
 
       DrawText(
         "Press Enter to start the game.",
         (GetScreenWidth() / 2) - (center_x_10 / 2),
-        1100, 
-        48,
+        900, 
+        36,
         BLACK 
       );
 
       DrawText(
         "Press Escape at any point to Quit.",
         (GetScreenWidth() / 2) - (center_x_11 / 2),
-        1200, 
-        48,
+        1000, 
+        36,
         BLACK 
       );
 
