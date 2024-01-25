@@ -2,6 +2,7 @@
 
 #include <raylib-physfs.h>
 #include <fstream>
+#include <string>
 
 LevelEditor::LevelEditor() {
   model_cursor_pos_ = Vector3Zero();
@@ -9,12 +10,11 @@ LevelEditor::LevelEditor() {
   rot_angle_ = 0.f;
 
 
-  FilePathList model_paths = LoadDirectoryFiles("kenney-assets");
+  FilePathList model_paths = LoadDirectoryFilesFromPhysFS("assets/models");
   
-
   for (int i = 0; i < model_paths.count; ++i) {
     assets_.emplace_back(LevelAsset {
-      ModelComponent(model_paths.paths[i], WHITE),
+      ModelComponent(model_paths.paths[i], WHITE, true),
       LoadRenderTexture(100, 100),     
     });
   }
@@ -703,7 +703,6 @@ void LevelEditor::Load(
   std::vector<LevelCoin>& coins,
   const char* filename
 ) {
-
   const char* load_file = nullptr;
 
   if (IsFileDropped() && filename == nullptr) {
@@ -727,11 +726,18 @@ void LevelEditor::Load(
   meshes.clear();
   coins.clear();
 
-  std::ifstream level_file(load_file);
   nlohmann::json contents;
   if (filename != nullptr) {
-    contents = nlohmann::json::parse(LoadFileTextFromPhysFS(load_file));
+    unsigned int file_size = 0;
+    unsigned char* file_data = LoadFileDataFromPhysFS(load_file, &file_size);
+
+    char file_contents[file_size + 1];
+    std::memcpy(file_contents, file_data, file_size);
+    file_contents[file_size] = '\0';
+
+    contents = nlohmann::json::parse(std::string(file_contents));
   } else {
+    std::ifstream level_file(load_file);
     contents = nlohmann::json::parse(level_file);
   }
 
@@ -843,4 +849,5 @@ void LevelEditor::ResetModes() {
 void LevelEditor::ResetLoadedFile() {
   loaded_file_ = "";
 }
+
 
