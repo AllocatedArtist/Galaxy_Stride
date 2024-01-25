@@ -8,7 +8,7 @@
 
 int main(void) {
 
-  constexpr bool kIsGameOnly = true;
+  constexpr bool kIsGameOnly = false;
 
   ConfigFlags flags;
 
@@ -53,18 +53,21 @@ int main(void) {
 
   int max_score = 0;
 
-  bool menu = true;
+  bool menu = kIsGameOnly;
   bool game_started = false;
   bool release_resources_game_over = false;
   int final_game_score = 0;
 
+  if (kIsGameOnly) {
+    level_editor.Load(
+      game.GetFlag(), 
+      game.GetMeshes(), 
+      game.GetCoins(), 
+      game.NextLevel().c_str()
+    );
+  } 
+
   SetExitKey(KEY_ESCAPE);
-  level_editor.Load(
-    game.GetFlag(), 
-    game.GetMeshes(), 
-    game.GetCoins(), 
-    game.NextLevel().c_str()
-  );
 
  
   while (!WindowShouldClose()) { 
