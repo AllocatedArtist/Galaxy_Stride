@@ -1,6 +1,5 @@
 #define GLSL_VERSION 330
 #include <raylib.h>
-
 #include <raylib-physfs.h>
 
 #include "src/Game.h"
@@ -19,6 +18,8 @@ int main(void) {
 
   SetConfigFlags(ConfigFlags::FLAG_BORDERLESS_WINDOWED_MODE);
   InitWindow(window_width, window_height, "Galaxy Stride");
+
+  SetTraceLogLevel(LOG_FATAL);
 
   InitAudioDevice();
 
@@ -41,7 +42,8 @@ int main(void) {
   SetTargetFPS(120); 
 
   LevelEditor level_editor;
-  level_editor.UpdateThumbnails();
+
+  //level_editor.UpdateThumbnails();
 
   bool saved = false;
   float save_timer = 0.f;
@@ -60,7 +62,6 @@ int main(void) {
     "assets/levels/level_4.json",
   });
 
-
   int max_score = 0;
 
   bool menu = true;
@@ -69,6 +70,7 @@ int main(void) {
   int final_game_score = 0;
 
   SetExitKey(KEY_ESCAPE);
+
   level_editor.Load(
     game.GetFlag(), 
     game.GetMeshes(), 
@@ -76,6 +78,19 @@ int main(void) {
     game.NextLevel().c_str()
   );
 
+  Shader custom_model_shader = LoadShaderFromPhysFS(
+    "assets/shaders/model.vert", 
+    "assets/shaders/model.frag"
+  );
+
+  int custom_model_uniform_model = 
+    GetShaderLocation(custom_model_shader, "model");
+
+  int custom_model_uniform_view_projection = 
+    GetShaderLocation(custom_model_shader, "viewProjection");
+
+  int custom_model_uniform_base_color = 
+    GetShaderLocation(custom_model_shader, "base_color");  
  
   while (!WindowShouldClose()) { 
 
@@ -84,11 +99,6 @@ int main(void) {
       max_score += game.GetCoins().size();
       song.looping = true;
       PlayMusicStream(song);
-    }
-
-    if (kIsGameOnly && !menu) {
-      float pan = sinf((float)GetTime() * 0.3);
-      SetMusicPan(song, pan);
     }
 
     UpdateMusicStream(song);
@@ -171,7 +181,7 @@ int main(void) {
       is_play_mode ? game.GetCamera() : camera.GetCamera().GetCamera();
   
     BeginMode3D(main_camera); 
-
+ 
     if (!is_play_mode) {
       level_editor.PlacePlayer(camera);
     
@@ -191,18 +201,60 @@ int main(void) {
       }
     }
 
+    /*
     for (const LevelCoin& coin : game.GetCoins()) {
       if (!coin.collected_) {
         level_editor.DrawCoins(coin);
       }
     }
+    */
 
+    /*
     for (const LevelMesh& mesh : game.GetMeshes()) {
       level_editor.DrawAsset(mesh, is_play_mode);
     }
+    */
+
+    for (const LevelCoin& coin : game.GetCoins()) { 
+      if (!coin.collected_) {
+        level_editor.GetAsset(coin.index_).model_.DrawCustomModel(
+          game.GetFlyCamera(),
+          custom_model_shader,
+          custom_model_uniform_model,
+          custom_model_uniform_view_projection,
+          custom_model_uniform_base_color,
+          coin.pos_,
+          coin.rotation_
+        );
+      }
+    }
+
+
+    for (const LevelMesh& mesh : game.GetMeshes()) { 
+      level_editor.GetAsset(mesh.index_).model_.DrawCustomModel(
+        game.GetFlyCamera(),
+        custom_model_shader,
+        custom_model_uniform_model,
+        custom_model_uniform_view_projection,
+        custom_model_uniform_base_color,
+        mesh.pos_,
+        mesh.rotation_
+      );
+    }
+
 
     if (!level_editor.IsFlagMode()) {
-      level_editor.DrawFlag(game.GetFlag());
+      //level_editor.DrawFlag(game.GetFlag());
+      ModelComponent& flag = level_editor.GetAsset(kFlagModelIndex).model_;
+      level_editor.GetAsset(kFlagModelIndex).model_.DrawCustomModel(
+        game.GetFlyCamera(),
+        custom_model_shader,
+        custom_model_uniform_model,
+        custom_model_uniform_view_projection,
+        custom_model_uniform_base_color,
+        game.GetFlag().flag_position_,
+        game.GetFlag().flag_rotation_
+      );
     }
 
     rlDisableBackfaceCulling();
@@ -407,9 +459,7 @@ int main(void) {
         BLACK
       );
     }
-
-    DrawFPS(0, 0);
-    
+ 
     EndDrawing(); 
   }
 
